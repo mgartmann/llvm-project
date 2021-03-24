@@ -1,14 +1,14 @@
 // RUN: %check_clang_tidy %s misc-cin-cout %t
 
-// FIXME: Add something that triggers the check here.
-void f();
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: function 'f' is insufficiently awesome [misc-cin-cout]
+#include <iostream>
 
-// FIXME: Verify the applied fix.
-//   * Make the CHECK patterns specific enough and try to make verified lines
-//     unique to avoid incorrect matches.
-//   * Use {{}} for regular expressions.
-// CHECK-FIXES: {{^}}void awesome_f();{{$}}
+std::cout << "This should trigger the check";
+// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: cin/cout should only be used inside main function [misc-cin-cout]
 
-// FIXME: Add something that doesn't trigger the check here.
-void awesome_f2();
+void problematic() {
+  std::wcout << "This should trigger the check";
+}
+
+int main() {
+  std::cout << "This should not trigger the check";
+}
