@@ -95,6 +95,11 @@ New checks
   Finds member initializations in the constructor body which can be placed into
   the initialization list instead.
 
+- New :doc:`misc-cin-cout
+  <clang-tidy/checks/misc-cin-cout>` check.
+
+  FIXME: add release notes.
+
 New check aliases
 ^^^^^^^^^^^^^^^^^
 
