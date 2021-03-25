@@ -17,11 +17,8 @@ namespace tidy {
 namespace misc {
 
 void CinCoutCheck::registerMatchers(MatchFinder *Finder) {
-  //TODO: declRefExpr(to(namedDecl(hasAnyName("cout"))), to(namedDecl(hasAnyName("cin"))))
   Finder->addMatcher(
-      declRefExpr(to(namedDecl(hasAnyName("cout")))).bind("match"), this);
-  Finder->addMatcher(
-      declRefExpr(to(namedDecl(hasAnyName("cin")))).bind("match"), this);
+      declRefExpr(to(namedDecl(hasAnyName("cin", "wcin", "cout", "wcout", "cerr", "wcerr", "clog", "wclog")))).bind("match"), this);
 }
 
 void CinCoutCheck::check(const MatchFinder::MatchResult &Result) {
@@ -35,7 +32,7 @@ void CinCoutCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   diag(MatchedDecl->getLocation(),
-       "cin/cout should only be used inside main function");
+       "predefined standard stream objects should not be used outside the main function");
 }
 
 bool CinCoutCheck::isInsideMainFunction(const MatchFinder::MatchResult &Result,
