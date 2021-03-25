@@ -1,4 +1,4 @@
-//===--- CinCoutCheck.cpp - clang-tidy ------------------------------------===//
+//===--- StdStreamObjectsOutsideMainCheck.cpp - clang-tidy ------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CinCoutCheck.h"
+#include "StdStreamObjectsOutsideMainCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
@@ -16,16 +16,16 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-void CinCoutCheck::registerMatchers(MatchFinder *Finder) {
+void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       declRefExpr(to(namedDecl(hasAnyName("cin", "wcin", "cout", "wcout", "cerr", "wcerr", "clog", "wclog")))).bind("match"), this);
 }
 
-void CinCoutCheck::check(const MatchFinder::MatchResult &Result) {
+void StdStreamObjectsOutsideMainCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *MatchedDecl = Result.Nodes.getNodeAs<DeclRefExpr>("match");
 
   const bool isInMain =
-      CinCoutCheck::isInsideMainFunction(Result, DynTypedNode::create(*MatchedDecl));
+      StdStreamObjectsOutsideMainCheck::isInsideMainFunction(Result, DynTypedNode::create(*MatchedDecl));
 
   if (isInMain) {
     return;
@@ -35,7 +35,7 @@ void CinCoutCheck::check(const MatchFinder::MatchResult &Result) {
        "predefined standard stream objects should not be used outside the main function");
 }
 
-bool CinCoutCheck::isInsideMainFunction(const MatchFinder::MatchResult &Result,
+bool StdStreamObjectsOutsideMainCheck::isInsideMainFunction(const MatchFinder::MatchResult &Result,
                                         const DynTypedNode &Node) {
   const auto *AsFunctionDecl = Node.get<FunctionDecl>();
 
@@ -48,7 +48,7 @@ bool CinCoutCheck::isInsideMainFunction(const MatchFinder::MatchResult &Result,
 
   return llvm::any_of(
       Result.Context->getParents(Node), [&Result](const DynTypedNode &Parent) {
-        return CinCoutCheck::isInsideMainFunction(Result, Parent);
+        return StdStreamObjectsOutsideMainCheck::isInsideMainFunction(Result, Parent);
       });
 }
 

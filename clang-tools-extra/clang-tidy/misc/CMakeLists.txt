@@ -4,7 +4,6 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_clang_library(clangTidyMiscModule
-  CinCoutCheck.cpp
   DefinitionsInHeadersCheck.cpp
   MiscTidyModule.cpp
   MisplacedConstCheck.cpp

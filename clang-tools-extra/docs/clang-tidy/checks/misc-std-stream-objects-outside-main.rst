@@ -1,6 +1,6 @@
-.. title:: clang-tidy - misc-cin-cout
+.. title:: clang-tidy - misc-std-stream-objects-outside-main
 
-misc-cin-cout
+misc-std-stream-objects-outside-main
 =============
 
 The check diagnoses when a predefined standard stream object (i.e., ``cin``, ``wcin``, 
