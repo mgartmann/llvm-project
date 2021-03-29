@@ -24,12 +24,11 @@ void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
 void StdStreamObjectsOutsideMainCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *MatchedDecl = Result.Nodes.getNodeAs<DeclRefExpr>("match");
 
-  const bool isInMain =
+  const bool IsInMain =
       StdStreamObjectsOutsideMainCheck::isInsideMainFunction(Result, DynTypedNode::create(*MatchedDecl));
 
-  if (isInMain) {
+  if (IsInMain)
     return;
-  }
 
   diag(MatchedDecl->getLocation(),
        "predefined standard stream objects should not be used outside the main function");
@@ -39,11 +38,9 @@ bool StdStreamObjectsOutsideMainCheck::isInsideMainFunction(const MatchFinder::M
                                         const DynTypedNode &Node) {
   const auto *AsFunctionDecl = Node.get<FunctionDecl>();
 
-  if (AsFunctionDecl) {
-    if (AsFunctionDecl->getIdentifier() &&
-        AsFunctionDecl->getName().equals("main")) {
-      return true;
-    }
+  if (AsFunctionDecl && AsFunctionDecl->getIdentifier() &&
+      AsFunctionDecl->getName().equals("main")) {
+    return true;
   }
 
   return llvm::any_of(

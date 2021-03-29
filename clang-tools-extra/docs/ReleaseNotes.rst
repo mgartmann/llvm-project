@@ -95,10 +95,12 @@ New checks
   Finds member initializations in the constructor body which can be placed into
   the initialization list instead.
 
-- New :doc:`misc-cin-cout
-  <clang-tidy/checks/misc-cin-cout>` check.
+- New :doc:`misc-std-stream-objects-outside-main
+  <clang-tidy/checks/misc-std-stream-objects-outside-main>` check.
 
-  FIXME: add release notes.
+  Diagnoses if a predefined standard stream object (cin, wcin, 
+  cout, wcout, cerr or wcerr) is used 
+  outside the main function.
 
 New check aliases
 ^^^^^^^^^^^^^^^^^

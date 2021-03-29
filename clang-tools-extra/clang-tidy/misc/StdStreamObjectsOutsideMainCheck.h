@@ -16,7 +16,7 @@ namespace tidy {
 namespace misc {
 
 /// Diagnoses if a predefined standard stream object (`cin`, `wcin`, 
-/// `cout`, `wcout`, `cerr`, `wcerr`, `clog` or `wclog`) is used 
+/// `cout`, `wcout`, `cerr` or `wcerr`) is used 
 /// outside the `main` function.
 ///
 /// For the user-facing documentation and examples see:
