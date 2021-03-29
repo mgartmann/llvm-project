@@ -18,7 +18,7 @@ namespace misc {
 
 void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
-      declRefExpr(to(namedDecl(hasAnyName("cin", "wcin", "cout", "wcout", "cerr", "wcerr", "clog", "wclog")))).bind("match"), this);
+      declRefExpr(to(namedDecl(hasAnyName("cin", "wcin", "cout", "wcout", "cerr", "wcerr")))).bind("match"), this);
 }
 
 void StdStreamObjectsOutsideMainCheck::check(const MatchFinder::MatchResult &Result) {

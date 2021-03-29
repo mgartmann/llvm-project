@@ -13,6 +13,7 @@ add_clang_library(clangTidyMiscModule
   NonPrivateMemberVariablesInClassesCheck.cpp
   RedundantExpressionCheck.cpp
   StaticAssertCheck.cpp
+  StdStreamObjectsOutsideMainCheck.cpp
   ThrowByValueCatchByReferenceCheck.cpp
   UnconventionalAssignOperatorCheck.cpp
   UniqueptrResetReleaseCheck.cpp
