@@ -3,8 +3,8 @@
 misc-std-stream-objects-outside-main
 =============
 
-The check diagnoses when a predefined standard stream object (i.e., ``cin``, ``wcin``,
-``cout``, ``wcout``, ``cerr`` and ``wcerr``) is used outside the ``main`` function.
+Diagnoses if a predefined standard stream object (``cin``, ``wcin``,
+``cout``, ``wcout``, ``cerr`` or ``wcerr``) is used outside the ``main`` function.
 
 For instance, in the following code, the use of ``std::cout`` outside of ``main()`` would get
 flagged whereas the use of ``std::cout`` inside ``main()`` is not flagged:

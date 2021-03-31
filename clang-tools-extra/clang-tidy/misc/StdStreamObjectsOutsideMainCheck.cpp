@@ -43,8 +43,8 @@ bool StdStreamObjectsOutsideMainCheck::isInsideMainFunction(
     const MatchFinder::MatchResult &Result, const DynTypedNode &Node) {
   const auto *AsFunctionDecl = Node.get<FunctionDecl>();
 
-  if (AsFunctionDecl && AsFunctionDecl->getIdentifier() &&
-      AsFunctionDecl->getName().equals("main")) {
+  if (AsFunctionDecl && (AsFunctionDecl->isMain() ||
+      AsFunctionDecl->isMSVCRTEntryPoint())) {
     return true;
   }
 
