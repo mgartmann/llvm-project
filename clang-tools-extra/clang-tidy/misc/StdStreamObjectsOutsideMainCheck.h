@@ -31,9 +31,6 @@ public:
 
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
-  static bool
-  isInsideMainFunction(const ast_matchers::MatchFinder::MatchResult &Result,
-                       const DynTypedNode &Node);
 };
 
 } // namespace misc
