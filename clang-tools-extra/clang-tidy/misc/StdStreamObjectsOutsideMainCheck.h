@@ -25,7 +25,7 @@ public:
   StdStreamObjectsOutsideMainCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
 
-  bool isLanguageVersionSupported(const LangOptions &LangOpts) const override{
+  bool isLanguageVersionSupported(const LangOptions &LangOpts) const override {
     return LangOpts.CPlusPlus;
   };
 
