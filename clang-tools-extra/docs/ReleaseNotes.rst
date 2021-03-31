@@ -98,9 +98,8 @@ New checks
 - New :doc:`misc-std-stream-objects-outside-main
   <clang-tidy/checks/misc-std-stream-objects-outside-main>` check.
 
-  Diagnoses if a predefined standard stream object (cin, wcin, 
-  cout, wcout, cerr or wcerr) is used 
-  outside the main function.
+  Diagnoses if a predefined standard stream object (cin, wcin,
+  cout, wcout, cerr or wcerr) is used outside the main function.
 
 New check aliases
 ^^^^^^^^^^^^^^^^^

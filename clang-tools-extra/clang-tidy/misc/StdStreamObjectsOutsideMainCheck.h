@@ -15,9 +15,8 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// Diagnoses if a predefined standard stream object (`cin`, `wcin`, 
-/// `cout`, `wcout`, `cerr` or `wcerr`) is used 
-/// outside the `main` function.
+/// Diagnoses if a predefined standard stream object (`cin`, `wcin`,
+/// `cout`, `wcout`, `cerr` or `wcerr`) is used outside the `main` function.
 ///
 /// For the user-facing documentation and examples see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/misc-std-stream-objects-outside-main.html

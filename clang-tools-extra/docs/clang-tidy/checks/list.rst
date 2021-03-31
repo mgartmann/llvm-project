@@ -210,13 +210,13 @@ Clang-Tidy Checks
    `misc-non-private-member-variables-in-classes <misc-non-private-member-variables-in-classes.html>`_,
    `misc-redundant-expression <misc-redundant-expression.html>`_, "Yes"
    `misc-static-assert <misc-static-assert.html>`_, "Yes"
+   `misc-std-stream-objects-outside-main <misc-std-stream-objects-outside-main.html>`_, "Yes"
    `misc-throw-by-value-catch-by-reference <misc-throw-by-value-catch-by-reference.html>`_,
    `misc-unconventional-assign-operator <misc-unconventional-assign-operator.html>`_,
    `misc-uniqueptr-reset-release <misc-uniqueptr-reset-release.html>`_, "Yes"
    `misc-unused-alias-decls <misc-unused-alias-decls.html>`_, "Yes"
    `misc-unused-parameters <misc-unused-parameters.html>`_, "Yes"
    `misc-unused-using-decls <misc-unused-using-decls.html>`_, "Yes"
-   `misc-cin-cout <misc-cin-cout.html>`_, "Yes"
    `modernize-avoid-bind <modernize-avoid-bind.html>`_, "Yes"
    `modernize-avoid-c-arrays <modernize-avoid-c-arrays.html>`_,
    `modernize-concat-nested-namespaces <modernize-concat-nested-namespaces.html>`_, "Yes"
