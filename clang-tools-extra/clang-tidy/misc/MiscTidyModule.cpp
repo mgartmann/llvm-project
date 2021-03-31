@@ -45,7 +45,7 @@ public:
     CheckFactories.registerCheck<RedundantExpressionCheck>(
         "misc-redundant-expression");
     CheckFactories.registerCheck<StaticAssertCheck>("misc-static-assert");
-    CheckFactories.registerCheck<StaticAssertCheck>(
+    CheckFactories.registerCheck<StdStreamObjectsOutsideMainCheck>(
         "misc-std-stream-objects-outside-main");
     CheckFactories.registerCheck<ThrowByValueCatchByReferenceCheck>(
         "misc-throw-by-value-catch-by-reference");
