@@ -20,7 +20,8 @@ namespace misc {
 void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       declRefExpr(to(namedDecl(hasAnyName("cin", "wcin", "cout", "wcout",
-                                          "cerr", "wcerr"))))
+                                          "cerr", "wcerr"))),
+                  unless(forFunction(isMain())))
           .bind("match"),
       this);
 }
@@ -29,30 +30,8 @@ void StdStreamObjectsOutsideMainCheck::check(
     const MatchFinder::MatchResult &Result) {
   const auto *MatchedDecl = Result.Nodes.getNodeAs<DeclRefExpr>("match");
 
-  const bool IsInMain = StdStreamObjectsOutsideMainCheck::isInsideMainFunction(
-      Result, DynTypedNode::create(*MatchedDecl));
-
-  if (IsInMain)
-    return;
-
   diag(MatchedDecl->getLocation(), "predefined standard stream objects should "
                                    "not be used outside the main function");
-}
-
-bool StdStreamObjectsOutsideMainCheck::isInsideMainFunction(
-    const MatchFinder::MatchResult &Result, const DynTypedNode &Node) {
-  const auto *AsFunctionDecl = Node.get<FunctionDecl>();
-
-  if (AsFunctionDecl &&
-      (AsFunctionDecl->isMain() || AsFunctionDecl->isMSVCRTEntryPoint())) {
-    return true;
-  }
-
-  return llvm::any_of(
-      Result.Context->getParents(Node), [&Result](const DynTypedNode &Parent) {
-        return StdStreamObjectsOutsideMainCheck::isInsideMainFunction(Result,
-                                                                      Parent);
-      });
 }
 
 } // namespace misc
