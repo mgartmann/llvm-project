@@ -1,6 +1,23 @@
-// RUN: %check_clang_tidy -std=c++14-or-later %s misc-std-stream-objects-outside-main %t
+// RUN: %check_clang_tidy %s misc-std-stream-objects-outside-main %t
 
-#include <iostream>
+namespace std {
+struct string {
+  string(const char *);
+  ~string();
+};
+
+struct Ostream {
+  Ostream &operator<<(string Message);
+};
+
+struct Istream {
+  Istream &operator>>(string Message);
+};
+
+Ostream cout{}, wcout{}, cerr{}, wcerr{};
+Istream cin{}, wcin{};
+
+} // namespace std
 
 void problematic() {
   // CHECK-MESSAGES: :[[@LINE+1]]:8: warning: predefined standard stream objects should not be used outside the main function [misc-std-stream-objects-outside-main]
@@ -15,13 +32,13 @@ void problematic() {
   // CHECK-MESSAGES: :[[@LINE+1]]:8: warning: predefined standard stream objects should not be used outside the main function [misc-std-stream-objects-outside-main]
   std::wcerr << "This should trigger the check";
 
-  int I{0};
+  std::string Foo{"bar"};
 
   // CHECK-MESSAGES: :[[@LINE+1]]:8: warning: predefined standard stream objects should not be used outside the main function [misc-std-stream-objects-outside-main]
-  std::cin >> I;
+  std::cin >> Foo;
 
   // CHECK-MESSAGES: :[[@LINE+1]]:8: warning: predefined standard stream objects should not be used outside the main function [misc-std-stream-objects-outside-main]
-  std::wcin >> I;
+  std::wcin >> Foo;
 }
 
 int main() {
@@ -30,7 +47,7 @@ int main() {
   std::cerr << "This should not trigger the check";  // OK
   std::wcerr << "This should not trigger the check"; // OK
 
-  int I{0};
-  std::cin >> I;  // OK
-  std::wcin >> I; // OK
+  std::string Foo{"bar"};
+  std::cin >> Foo;  // OK
+  std::wcin >> Foo; // OK
 }
