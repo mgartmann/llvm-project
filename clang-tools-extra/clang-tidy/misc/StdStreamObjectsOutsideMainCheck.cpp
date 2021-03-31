@@ -1,4 +1,5 @@
-//===--- StdStreamObjectsOutsideMainCheck.cpp - clang-tidy ------------------------------------===//
+//===--- StdStreamObjectsOutsideMainCheck.cpp - clang-tidy
+//-----------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -18,24 +19,28 @@ namespace misc {
 
 void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
-      declRefExpr(to(namedDecl(hasAnyName("cin", "wcin", "cout", "wcout", "cerr", "wcerr")))).bind("match"), this);
+      declRefExpr(to(namedDecl(hasAnyName("cin", "wcin", "cout", "wcout",
+                                          "cerr", "wcerr"))))
+          .bind("match"),
+      this);
 }
 
-void StdStreamObjectsOutsideMainCheck::check(const MatchFinder::MatchResult &Result) {
+void StdStreamObjectsOutsideMainCheck::check(
+    const MatchFinder::MatchResult &Result) {
   const auto *MatchedDecl = Result.Nodes.getNodeAs<DeclRefExpr>("match");
 
-  const bool IsInMain =
-      StdStreamObjectsOutsideMainCheck::isInsideMainFunction(Result, DynTypedNode::create(*MatchedDecl));
+  const bool IsInMain = StdStreamObjectsOutsideMainCheck::isInsideMainFunction(
+      Result, DynTypedNode::create(*MatchedDecl));
 
   if (IsInMain)
     return;
 
-  diag(MatchedDecl->getLocation(),
-       "predefined standard stream objects should not be used outside the main function");
+  diag(MatchedDecl->getLocation(), "predefined standard stream objects should "
+                                   "not be used outside the main function");
 }
 
-bool StdStreamObjectsOutsideMainCheck::isInsideMainFunction(const MatchFinder::MatchResult &Result,
-                                        const DynTypedNode &Node) {
+bool StdStreamObjectsOutsideMainCheck::isInsideMainFunction(
+    const MatchFinder::MatchResult &Result, const DynTypedNode &Node) {
   const auto *AsFunctionDecl = Node.get<FunctionDecl>();
 
   if (AsFunctionDecl && AsFunctionDecl->getIdentifier() &&
@@ -45,7 +50,8 @@ bool StdStreamObjectsOutsideMainCheck::isInsideMainFunction(const MatchFinder::M
 
   return llvm::any_of(
       Result.Context->getParents(Node), [&Result](const DynTypedNode &Parent) {
-        return StdStreamObjectsOutsideMainCheck::isInsideMainFunction(Result, Parent);
+        return StdStreamObjectsOutsideMainCheck::isInsideMainFunction(Result,
+                                                                      Parent);
       });
 }
 
