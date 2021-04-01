@@ -89,6 +89,11 @@ New checks
   Finds inner loops that have not been unrolled, as well as fully unrolled
   loops with unknown loops bounds or a large number of iterations.
 
+- New :doc:`cppcoreguidelines-declare-loop-variable-in-the-initializer
+  <clang-tidy/checks/cppcoreguidelines-declare-loop-variable-in-the-initializer>` check.
+
+  FIXME: add release notes.
+
 - New :doc:`cppcoreguidelines-prefer-member-initializer
   <clang-tidy/checks/cppcoreguidelines-prefer-member-initializer>` check.
 
