@@ -20,7 +20,8 @@ namespace misc {
 void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       declRefExpr(to(namedDecl(hasAnyName("cin", "wcin", "cout", "wcout",
-                                          "cerr", "wcerr"))),
+                                          "cerr", "wcerr"),
+                               isInStdNamespace())),
                   unless(forFunction(isMain())))
           .bind("match"),
       this);
