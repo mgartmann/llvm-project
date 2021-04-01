@@ -23,16 +23,34 @@ void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
                                           "cerr", "wcerr"),
                                isInStdNamespace())),
                   unless(forFunction(isMain())))
-          .bind("match"),
+          .bind("StreamObject"),
       this);
+
+  Finder->addMatcher(declRefExpr(to(namedDecl(hasAnyName(
+                                     "printf", "vprintf", "puts", "putchar",
+                                     "scanf", "getchar", "gets"))),
+                                 unless(forFunction(isMain())))
+                         .bind("CLibFunc"),
+                     this);
 }
 
 void StdStreamObjectsOutsideMainCheck::check(
     const MatchFinder::MatchResult &Result) {
-  const auto *MatchedDecl = Result.Nodes.getNodeAs<DeclRefExpr>("match");
 
-  diag(MatchedDecl->getLocation(), "predefined standard stream objects should "
-                                   "not be used outside the main function");
+  if (const auto *MatchedStreamObj =
+          Result.Nodes.getNodeAs<DeclRefExpr>("StreamObject")) {
+    diag(MatchedStreamObj->getLocation(),
+         "predefined standard stream objects should "
+         "not be used outside the main function");
+    return;
+  }
+
+  if (const auto *MatchedCLibFunc =
+          Result.Nodes.getNodeAs<DeclRefExpr>("CLibFunc")) {
+    diag(MatchedCLibFunc->getLocation(),
+         "cstdio functions should not be used outside the main function");
+    return;
+  }
 }
 
 } // namespace misc

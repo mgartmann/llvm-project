@@ -24,7 +24,15 @@ std::Ostream cout{};
 std::Istream cin{};
 } // namespace arbitrary_namespace
 
-void problematic() {
+int printf(const char *format, ...);
+int vprintf(const char *const, ...);
+int puts(const char *str);
+int putchar(int character);
+int scanf(const char *format, ...);
+int getchar(void);
+char *gets(char *str);
+
+void anyOtherFunction() {
   // CHECK-MESSAGES: :[[@LINE+1]]:8: warning: predefined standard stream objects should not be used outside the main function [misc-std-stream-objects-outside-main]
   std::cout << "This should trigger the check";
 
@@ -48,6 +56,28 @@ void problematic() {
   std::wcin >> Foo;
 
   arbitrary_namespace::cin >> Foo; // OK
+
+  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: cstdio functions should not be used outside the main function [misc-std-stream-objects-outside-main]
+  printf("This should trigger the check");
+
+  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: cstdio functions should not be used outside the main function [misc-std-stream-objects-outside-main]
+  vprintf("This should trigger the check");
+
+  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: cstdio functions should not be used outside the main function [misc-std-stream-objects-outside-main]
+  puts("This should trigger the check");
+
+  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: cstdio functions should not be used outside the main function [misc-std-stream-objects-outside-main]
+  putchar('m');
+
+  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: cstdio functions should not be used outside the main function [misc-std-stream-objects-outside-main]
+  scanf("%s");
+
+  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: cstdio functions should not be used outside the main function [misc-std-stream-objects-outside-main]
+  getchar();
+
+  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: cstdio functions should not be used outside the main function [misc-std-stream-objects-outside-main]
+  char x[255];
+  gets(x);
 }
 
 int main() {
@@ -61,4 +91,11 @@ int main() {
   std::cin >> Foo;                 // OK
   std::wcin >> Foo;                // OK
   arbitrary_namespace::cin >> Foo; // OK
+
+  printf("This should not trigger the check");  // OK
+  vprintf("This should not trigger the check"); // OK
+  puts("This should not trigger the check");    // OK
+  putchar('m');                                 // OK
+  scanf("%s");                                  // OK
+  getchar();                                    // OK
 }
