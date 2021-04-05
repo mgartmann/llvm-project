@@ -19,26 +19,29 @@ namespace misc {
 
 void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
-      declRefExpr(to(namedDecl(hasAnyName("cin", "wcin", "cout", "wcout",
-                                          "cerr", "wcerr"),
-                               isInStdNamespace())),
+      declRefExpr(to(varDecl(hasAnyName("cin", "wcin", "cout", "wcout", "cerr",
+                                        "wcerr"),
+                             isInStdNamespace())),
                   unless(forFunction(isMain())))
-          .bind("StreamObject"),
+          .bind("StdStreamObject"),
       this);
 
-  Finder->addMatcher(declRefExpr(to(namedDecl(hasAnyName(
-                                     "printf", "vprintf", "puts", "putchar",
-                                     "scanf", "getchar", "gets"))),
-                                 unless(forFunction(isMain())))
-                         .bind("CLibFunc"),
-                     this);
+  Finder->addMatcher(
+      declRefExpr(
+          hasDeclaration(functionDecl(
+              hasDeclContext(linkageSpecDecl()),
+              hasAnyName("printf", "vprintf", "puts", "putchar", "scanf",
+                         "getchar", "gets"))),
+          unless(forFunction(isMain())))
+          .bind("CLibFunction"),
+      this);
 }
 
 void StdStreamObjectsOutsideMainCheck::check(
     const MatchFinder::MatchResult &Result) {
 
   if (const auto *MatchedStreamObj =
-          Result.Nodes.getNodeAs<DeclRefExpr>("StreamObject")) {
+          Result.Nodes.getNodeAs<DeclRefExpr>("StdStreamObject")) {
     diag(MatchedStreamObj->getLocation(),
          "predefined standard stream objects should "
          "not be used outside the main function");
@@ -46,7 +49,7 @@ void StdStreamObjectsOutsideMainCheck::check(
   }
 
   if (const auto *MatchedCLibFunc =
-          Result.Nodes.getNodeAs<DeclRefExpr>("CLibFunc")) {
+          Result.Nodes.getNodeAs<DeclRefExpr>("CLibFunction")) {
     diag(MatchedCLibFunc->getLocation(),
          "cstdio functions should not be used outside the main function");
     return;
