@@ -32,6 +32,20 @@ void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
                                  unless(forFunction(isMain())))
                          .bind("CLibFunction"),
                      this);
+
+  /// Matcher for:
+  /// \code
+  ///   auto Print = &puts;
+  ///   Print("This is using stdio");
+  /// \endcode
+  Finder->addMatcher(
+      declRefExpr(
+          hasDeclaration(varDecl(hasDescendant(declRefExpr(hasDeclaration(
+              functionDecl(hasAnyName("printf", "vprintf", "puts", "putchar",
+                                      "scanf", "getchar", "gets"))))))),
+          unless(forFunction(isMain())))
+          .bind("CLibFunction"),
+      this);
 }
 
 void StdStreamObjectsOutsideMainCheck::check(
