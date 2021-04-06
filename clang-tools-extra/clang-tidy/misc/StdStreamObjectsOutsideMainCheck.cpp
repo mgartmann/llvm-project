@@ -26,15 +26,12 @@ void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
           .bind("StdStreamObject"),
       this);
 
-  Finder->addMatcher(
-      declRefExpr(
-          hasDeclaration(functionDecl(
-              hasDeclContext(linkageSpecDecl()),
-              hasAnyName("printf", "vprintf", "puts", "putchar", "scanf",
-                         "getchar", "gets"))),
-          unless(forFunction(isMain())))
-          .bind("CLibFunction"),
-      this);
+  Finder->addMatcher(declRefExpr(hasDeclaration(functionDecl(hasAnyName(
+                                     "printf", "vprintf", "puts", "putchar",
+                                     "scanf", "getchar", "gets"))),
+                                 unless(forFunction(isMain())))
+                         .bind("CLibFunction"),
+                     this);
 }
 
 void StdStreamObjectsOutsideMainCheck::check(
