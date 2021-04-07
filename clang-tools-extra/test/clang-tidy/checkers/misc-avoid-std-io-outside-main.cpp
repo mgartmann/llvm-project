@@ -1,4 +1,5 @@
 // RUN: %check_clang_tidy %s misc-avoid-std-io-outside-main %t
+
 namespace std {
 struct string {
   string(const char *);
