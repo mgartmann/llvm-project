@@ -4,6 +4,7 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_clang_library(clangTidyMiscModule
+  AvoidStdIoOutsideMainCheck.cpp
   DefinitionsInHeadersCheck.cpp
   MiscTidyModule.cpp
   MisplacedConstCheck.cpp
@@ -13,7 +14,6 @@ add_clang_library(clangTidyMiscModule
   NonPrivateMemberVariablesInClassesCheck.cpp
   RedundantExpressionCheck.cpp
   StaticAssertCheck.cpp
-  StdStreamObjectsOutsideMainCheck.cpp
   ThrowByValueCatchByReferenceCheck.cpp
   UnconventionalAssignOperatorCheck.cpp
   UniqueptrResetReleaseCheck.cpp

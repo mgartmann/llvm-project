@@ -9,6 +9,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "AvoidStdIoOutsideMainCheck.h"
 #include "DefinitionsInHeadersCheck.h"
 #include "MisplacedConstCheck.h"
 #include "NewDeleteOverloadsCheck.h"
@@ -17,7 +18,6 @@
 #include "NonPrivateMemberVariablesInClassesCheck.h"
 #include "RedundantExpressionCheck.h"
 #include "StaticAssertCheck.h"
-#include "StdStreamObjectsOutsideMainCheck.h"
 #include "ThrowByValueCatchByReferenceCheck.h"
 #include "UnconventionalAssignOperatorCheck.h"
 #include "UniqueptrResetReleaseCheck.h"
@@ -32,6 +32,8 @@ namespace misc {
 class MiscModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.registerCheck<AvoidStdIoOutsideMainCheck>(
+        "misc-avoid-std-io-outside-main");
     CheckFactories.registerCheck<DefinitionsInHeadersCheck>(
         "misc-definitions-in-headers");
     CheckFactories.registerCheck<MisplacedConstCheck>("misc-misplaced-const");
@@ -45,8 +47,6 @@ public:
     CheckFactories.registerCheck<RedundantExpressionCheck>(
         "misc-redundant-expression");
     CheckFactories.registerCheck<StaticAssertCheck>("misc-static-assert");
-    CheckFactories.registerCheck<StdStreamObjectsOutsideMainCheck>(
-        "misc-std-stream-objects-outside-main");
     CheckFactories.registerCheck<ThrowByValueCatchByReferenceCheck>(
         "misc-throw-by-value-catch-by-reference");
     CheckFactories.registerCheck<UnconventionalAssignOperatorCheck>(

@@ -1,4 +1,4 @@
-//===--- StdStreamObjectsOutsideMainCheck.cpp - clang-tidy
+//===--- AvoidStdIoOutsideMainCheck.cpp - clang-tidy
 //-----------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "StdStreamObjectsOutsideMainCheck.h"
+#include "AvoidStdIoOutsideMainCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
@@ -17,7 +17,7 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
+void AvoidStdIoOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       declRefExpr(to(varDecl(hasAnyName("cin", "wcin", "cout", "wcout", "cerr",
                                         "wcerr"),
@@ -48,7 +48,7 @@ void StdStreamObjectsOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-void StdStreamObjectsOutsideMainCheck::check(
+void AvoidStdIoOutsideMainCheck::check(
     const MatchFinder::MatchResult &Result) {
 
   if (const auto *MatchedStreamObj =

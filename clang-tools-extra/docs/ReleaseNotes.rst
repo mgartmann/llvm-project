@@ -95,11 +95,13 @@ New checks
   Finds member initializations in the constructor body which can be placed into
   the initialization list instead.
 
-- New :doc:`misc-std-stream-objects-outside-main
-  <clang-tidy/checks/misc-std-stream-objects-outside-main>` check.
+- New :doc:`misc-avoid-std-io-outside-main
+  <clang-tidy/checks/misc-avoid-std-io-outside-main>` check.
 
   Diagnoses if a predefined standard stream object (``cin``, ``wcin``,
   ``cout``, ``wcout``, ``cerr`` or ``wcerr``) is used outside the ``main`` function.
+  It also flags uses of uses of ``cstdio``/``stdio.h`` functions like ``printf()`` 
+  outside the ``main`` function.
 
 New check aliases
 ^^^^^^^^^^^^^^^^^

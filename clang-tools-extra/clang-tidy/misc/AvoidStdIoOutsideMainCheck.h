@@ -1,4 +1,4 @@
-//===--- StdStreamObjectsOutsideMainCheck.h - clang-tidy --------*- C++ -*-===//
+//===--- AvoidStdIoOutsideMainCheck.h - clang-tidy --------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_STDSTREAMOBJECTSOUTSIDEMAINCHECK_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_STDSTREAMOBJECTSOUTSIDEMAINCHECK_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_AVOIDSTDIOOUTSIDEMAINCHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_AVOIDSTDIOOUTSIDEMAINCHECK_H
 
 #include "../ClangTidyCheck.h"
 
@@ -19,10 +19,10 @@ namespace misc {
 /// `cout`, `wcout`, `cerr` or `wcerr`) is used outside the `main` function.
 ///
 /// For the user-facing documentation and examples see:
-/// http://clang.llvm.org/extra/clang-tidy/checks/misc-std-stream-objects-outside-main.html
-class StdStreamObjectsOutsideMainCheck : public ClangTidyCheck {
+/// http://clang.llvm.org/extra/clang-tidy/checks/misc-avoid-std-io-outside-main.html
+class AvoidStdIoOutsideMainCheck : public ClangTidyCheck {
 public:
-  StdStreamObjectsOutsideMainCheck(StringRef Name, ClangTidyContext *Context)
+  AvoidStdIoOutsideMainCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
 
   bool isLanguageVersionSupported(const LangOptions &LangOpts) const override {
@@ -37,4 +37,4 @@ public:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_STDSTREAMOBJECTSOUTSIDEMAINCHECK_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_AVOIDSTDIOOUTSIDEMAINCHECK_H
