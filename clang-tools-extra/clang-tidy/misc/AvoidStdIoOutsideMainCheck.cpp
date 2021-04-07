@@ -33,7 +33,7 @@ void AvoidStdIoOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
                          .bind("CLibFunction"),
                      this);
 
-  /// Matcher for:
+  /// Matcher for indirect stdio uses:
   /// \code
   ///   auto Print = &puts;
   ///   Print("This is using stdio");
@@ -48,8 +48,7 @@ void AvoidStdIoOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-void AvoidStdIoOutsideMainCheck::check(
-    const MatchFinder::MatchResult &Result) {
+void AvoidStdIoOutsideMainCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (const auto *MatchedStreamObj =
           Result.Nodes.getNodeAs<DeclRefExpr>("StdStreamObject")) {

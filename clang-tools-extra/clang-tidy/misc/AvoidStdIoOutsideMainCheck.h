@@ -17,6 +17,8 @@ namespace misc {
 
 /// Diagnoses if a predefined standard stream object (`cin`, `wcin`,
 /// `cout`, `wcout`, `cerr` or `wcerr`) is used outside the `main` function.
+/// It also flags uses of uses of `cstdio`/`stdio.h` functions like `printf()`
+/// outside the `main` function.
 ///
 /// For the user-facing documentation and examples see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/misc-avoid-std-io-outside-main.html
