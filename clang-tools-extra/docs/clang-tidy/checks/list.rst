@@ -202,6 +202,7 @@ Clang-Tidy Checks
    `llvmlibc-callee-namespace <llvmlibc-callee-namespace.html>`_,
    `llvmlibc-implementation-in-namespace <llvmlibc-implementation-in-namespace.html>`_,
    `llvmlibc-restrict-system-libc-headers <llvmlibc-restrict-system-libc-headers.html>`_, "Yes"
+   `misc-misc-avoid-std-io-outside-main <misc-avoid-std-io-outside-main.html>`_, "Yes"
    `misc-definitions-in-headers <misc-definitions-in-headers.html>`_, "Yes"
    `misc-misplaced-const <misc-misplaced-const.html>`_,
    `misc-new-delete-overloads <misc-new-delete-overloads.html>`_,
@@ -210,7 +211,6 @@ Clang-Tidy Checks
    `misc-non-private-member-variables-in-classes <misc-non-private-member-variables-in-classes.html>`_,
    `misc-redundant-expression <misc-redundant-expression.html>`_, "Yes"
    `misc-static-assert <misc-static-assert.html>`_, "Yes"
-   `misc-std-stream-objects-outside-main <misc-std-stream-objects-outside-main.html>`_, "Yes"
    `misc-throw-by-value-catch-by-reference <misc-throw-by-value-catch-by-reference.html>`_,
    `misc-unconventional-assign-operator <misc-unconventional-assign-operator.html>`_,
    `misc-uniqueptr-reset-release <misc-uniqueptr-reset-release.html>`_, "Yes"
