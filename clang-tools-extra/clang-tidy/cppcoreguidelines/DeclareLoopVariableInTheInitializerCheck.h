@@ -15,13 +15,15 @@ namespace clang {
 namespace tidy {
 namespace cppcoreguidelines {
 
-/// Checks if a loop variable is declared in the initializer part of a for-statement.
+/// Checks if a loop variable is declared in the initializer part of a
+/// for-statement.
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-declare-loop-variable-in-the-initializer.html
 class DeclareLoopVariableInTheInitializerCheck : public ClangTidyCheck {
 public:
-  DeclareLoopVariableInTheInitializerCheck(StringRef Name, ClangTidyContext *Context)
+  DeclareLoopVariableInTheInitializerCheck(StringRef Name,
+                                           ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
