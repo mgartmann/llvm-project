@@ -12,6 +12,6 @@ void forLoopFunction() {
   for (I = 0; I < Limit; I++) {
   }
 
-  for (int I{0}; I < Limit; I++) {
+  for (int I{0}; I < Limit; I++) { // OK
   }
 }

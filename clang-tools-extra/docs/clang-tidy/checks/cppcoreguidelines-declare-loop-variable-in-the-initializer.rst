@@ -31,8 +31,3 @@ It does also cover parts of:
         for (int I{0}; I < Limit; I++) {
         }
     }
-
-Reason for this Check:
-
-It limits the visibility of the loop variable to the scope of the loop.
-It avoids using the loop variable for other purposes after the loop.
