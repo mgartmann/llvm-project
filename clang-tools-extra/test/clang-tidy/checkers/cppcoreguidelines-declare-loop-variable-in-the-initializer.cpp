@@ -1,14 +1,17 @@
 // RUN: %check_clang_tidy %s cppcoreguidelines-declare-loop-variable-in-the-initializer %t
 
-// FIXME: Add something that triggers the check here.
-void f();
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: function 'f' is insufficiently awesome [cppcoreguidelines-declare-loop-variable-in-the-initializer]
+void forLoopFunction() {
+    const int Limit{10};
+    int I{0};
 
-// FIXME: Verify the applied fix.
-//   * Make the CHECK patterns specific enough and try to make verified lines
-//     unique to avoid incorrect matches.
-//   * Use {{}} for regular expressions.
-// CHECK-FIXES: {{^}}void awesome_f();{{$}}
+    // CHECK-MESSAGES: :[[@LINE+1]]:5: warning: Prefer to declare a loop variable in the initializer part of a for-statement [cppcoreguidelines-declare-loop-variable-in-the-initializer]
+    for (; I < Limit; I++) {
+    }
 
-// FIXME: Add something that doesn't trigger the check here.
-void awesome_f2();
+    // CHECK-MESSAGES: :[[@LINE+1]]:5: warning: Prefer to declare a loop variable in the initializer part of a for-statement [cppcoreguidelines-declare-loop-variable-in-the-initializer]
+    for (I = 0; I < Limit; I++) {
+    }
+
+    for (int I{0}; I < Limit; I++) {
+    }
+}

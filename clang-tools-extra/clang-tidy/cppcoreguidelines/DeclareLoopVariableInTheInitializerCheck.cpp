@@ -16,20 +16,18 @@ namespace clang {
 namespace tidy {
 namespace cppcoreguidelines {
 
-void DeclareLoopVariableInTheInitializerCheck::registerMatchers(MatchFinder *Finder) {
-  // FIXME: Add matchers.
-  Finder->addMatcher(functionDecl().bind("x"), this);
+void DeclareLoopVariableInTheInitializerCheck::registerMatchers(
+    MatchFinder *Finder) {
+  Finder->addMatcher(forStmt(unless(has(declStmt()))).bind("forStmt"), this);
 }
 
-void DeclareLoopVariableInTheInitializerCheck::check(const MatchFinder::MatchResult &Result) {
-  // FIXME: Add callback implementation.
-  const auto *MatchedDecl = Result.Nodes.getNodeAs<FunctionDecl>("x");
-  if (!MatchedDecl->getIdentifier() || MatchedDecl->getName().startswith("awesome_"))
-    return;
-  diag(MatchedDecl->getLocation(), "function %0 is insufficiently awesome")
-      << MatchedDecl;
-  diag(MatchedDecl->getLocation(), "insert 'awesome'", DiagnosticIDs::Note)
-      << FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_");
+void DeclareLoopVariableInTheInitializerCheck::check(
+    const MatchFinder::MatchResult &Result) {
+  const auto *MatchedForStmt = Result.Nodes.getNodeAs<ForStmt>("forStmt");
+
+  diag(MatchedForStmt->getBeginLoc(),
+       "Prefer to declare a loop variable in the initializer part of a "
+       "for-statement");
 }
 
 } // namespace cppcoreguidelines
