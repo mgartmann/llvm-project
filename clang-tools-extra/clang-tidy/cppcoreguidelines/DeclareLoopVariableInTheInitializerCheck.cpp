@@ -27,7 +27,7 @@ void DeclareLoopVariableInTheInitializerCheck::check(
 
   diag(MatchedForStmt->getBeginLoc(),
        "Prefer to declare a loop variable in the initializer part of a "
-       "for-statement");
+       "for statement");
 }
 
 } // namespace cppcoreguidelines

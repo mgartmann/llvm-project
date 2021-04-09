@@ -1,4 +1,4 @@
-//===--- DeclareLoopVariableInTheInitializerCheck.h - clang-tidy *- C++ -*-===//
+//===--- DeclareLoopVariableInTheInitializerCheck.h - clang-tidy-*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -27,6 +27,9 @@ public:
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+  bool isLanguageVersionSupported(const LangOptions &LangOpts) const override {
+    return LangOpts.CPlusPlus;
+  }
 };
 
 } // namespace cppcoreguidelines

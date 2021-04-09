@@ -3,15 +3,7 @@
 cppcoreguidelines-declare-loop-variable-in-the-initializer
 ==========================================================
 
-Checks if a loop variable is declared in the initializer part of a for-statement.
-
-This check implements the rule `ES.74 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es74-prefer-to-declare-a-loop-variable-in-the-initializer-part-of-a-for-statement>`_ of the C++ Core Guidelines.
-
-It does also cover parts of:
-    - `ES.26 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es26-dont-use-a-variable-for-two-unrelated-purposes>`_
-    - `ES.5 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es5-keep-scopes-small>`_
-    - `ES.6 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es6-declare-names-in-for-statement-initializers-and-conditions-to-limit-scope>`_
-
+Checks if a loop variable is declared in the initializer part of a ``for`` statement.
 
 .. code-block:: c++
 
@@ -31,3 +23,10 @@ It does also cover parts of:
         for (int I{0}; I < Limit; I++) {
         }
     }
+
+This check implements the rule `ES.74 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es74-prefer-to-declare-a-loop-variable-in-the-initializer-part-of-a-for-statement>`_ of the C++ Core Guidelines.
+
+It does also cover parts of:
+    - `ES.26 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es26-dont-use-a-variable-for-two-unrelated-purposes>`_
+    - `ES.5 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es5-keep-scopes-small>`_
+    - `ES.6 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es6-declare-names-in-for-statement-initializers-and-conditions-to-limit-scope>`_

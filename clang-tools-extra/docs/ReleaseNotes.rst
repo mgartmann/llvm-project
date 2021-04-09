@@ -92,7 +92,7 @@ New checks
 - New :doc:`cppcoreguidelines-declare-loop-variable-in-the-initializer
   <clang-tidy/checks/cppcoreguidelines-declare-loop-variable-in-the-initializer>` check.
 
-  Checks if a loop variable is declared in the initializer part of a for-statement.
+  Checks if a loop variable is declared in the initializer part of a ``for`` statement.
 
 - New :doc:`cppcoreguidelines-prefer-member-initializer
   <clang-tidy/checks/cppcoreguidelines-prefer-member-initializer>` check.
