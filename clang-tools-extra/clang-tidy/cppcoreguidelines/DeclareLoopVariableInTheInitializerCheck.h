@@ -16,7 +16,7 @@ namespace tidy {
 namespace cppcoreguidelines {
 
 /// Checks if a loop variable is declared in the initializer part of a
-/// for-statement.
+/// for statement.
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-declare-loop-variable-in-the-initializer.html
