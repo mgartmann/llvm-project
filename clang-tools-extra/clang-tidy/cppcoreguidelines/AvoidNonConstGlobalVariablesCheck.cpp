@@ -51,7 +51,8 @@ void AvoidNonConstGlobalVariablesCheck::check(
           Result.Nodes.getNodeAs<VarDecl>("non-const_variable")) {
     diag(Variable->getLocation(), "variable %0 is non-const and globally "
                                   "accessible, consider making it const")
-        << Variable; // FIXME: Add fix-it hint to Variable
+        << Variable
+        << FixItHint::CreateInsertion(Variable->getLocation(), "const ");
     // Don't return early, a non-const variable may also be a pointer or
     // reference to non-const data.
   }
@@ -61,8 +62,9 @@ void AvoidNonConstGlobalVariablesCheck::check(
     diag(VD->getLocation(),
          "variable %0 provides global access to a non-const object; consider "
          "making the %select{referenced|pointed-to}1 data 'const'")
-        << VD
-        << VD->getType()->isPointerType(); // FIXME: Add fix-it hint to Variable
+        << VD << VD->getType()->isPointerType()
+        << FixItHint::CreateInsertion(VD->getSourceRange().getBegin(),
+                                      "const ");
   }
 }
 

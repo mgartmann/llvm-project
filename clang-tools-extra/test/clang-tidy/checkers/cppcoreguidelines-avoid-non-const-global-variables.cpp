@@ -2,6 +2,7 @@
 
 int nonConstInt = 0;
 // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: variable 'nonConstInt' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: int const nonConstInt = 0;
 
 int &nonConstIntReference = nonConstInt;
 // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: variable 'nonConstIntReference' provides global access to a non-const object; consider making the referenced data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
