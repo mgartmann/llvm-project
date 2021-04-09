@@ -4,11 +4,11 @@ void forLoopFunction() {
   const int Limit{10};
   int I{0};
 
-  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: Prefer to declare a loop variable in the initializer part of a for-statement [cppcoreguidelines-declare-loop-variable-in-the-initializer]
+  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: Prefer to declare a loop variable in the initializer part of a for statement [cppcoreguidelines-declare-loop-variable-in-the-initializer]
   for (; I < Limit; I++) {
   }
 
-  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: Prefer to declare a loop variable in the initializer part of a for-statement [cppcoreguidelines-declare-loop-variable-in-the-initializer]
+  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: Prefer to declare a loop variable in the initializer part of a for statement [cppcoreguidelines-declare-loop-variable-in-the-initializer]
   for (I = 0; I < Limit; I++) {
   }
 
