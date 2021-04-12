@@ -6,17 +6,21 @@ int nonConstInt = 0;
 
 int &nonConstIntReference = nonConstInt;
 // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: variable 'nonConstIntReference' provides global access to a non-const object; consider making the referenced data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: const int &nonConstIntReference = nonConstInt;
 
 int *pointerToNonConstInt = &nonConstInt;
 // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: variable 'pointerToNonConstInt' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
-// CHECK-MESSAGES: :[[@LINE-2]]:6: warning: variable 'pointerToNonConstInt' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-MESSAGES: :[[@LINE-3]]:6: warning: variable 'pointerToNonConstInt' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// TODO
 
 int *const constPointerToNonConstInt = &nonConstInt;
 // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'constPointerToNonConstInt' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: const int *const constPointerToNonConstInt = &nonConstInt;
 
 namespace namespace_name {
 int nonConstNamespaceInt = 0;
 // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: variable 'nonConstNamespaceInt' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: int const nonConstNamespaceInt = 0;
 
 const int constNamespaceInt = 0;
 } // namespace namespace_name
@@ -25,6 +29,7 @@ const int constInt = 0;
 
 const int *pointerToConstInt = &constInt;
 // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'pointerToConstInt' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: const int *const pointerToConstInt = &constInt;
 
 const int *const constPointerToConstInt = &constInt;
 
@@ -40,6 +45,7 @@ int function() {
 namespace {
 int nonConstAnonymousNamespaceInt = 0;
 // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: variable 'nonConstAnonymousNamespaceInt' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: int const nonConstAnonymousNamespaceInt = 0;
 } // namespace
 
 class DummyClass {
@@ -54,27 +60,35 @@ private:
 
 DummyClass nonConstClassInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'nonConstClassInstance' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: DummyClass const nonConstClassInstance;
 
 DummyClass *pointerToNonConstDummyClass = &nonConstClassInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: variable 'pointerToNonConstDummyClass' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
-// CHECK-MESSAGES: :[[@LINE-2]]:13: warning: variable 'pointerToNonConstDummyClass' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-MESSAGES: :[[@LINE-3]]:13: warning: variable 'pointerToNonConstDummyClass' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// TODO
 
 DummyClass &referenceToNonConstDummyClass = nonConstClassInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: variable 'referenceToNonConstDummyClass' provides global access to a non-const object; consider making the referenced data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: const DummyClass &referenceToNonConstDummyClass = nonConstClassInstance;
 
 int *nonConstPointerToMember = &nonConstClassInstance.nonConstPublicMemberVariable;
 // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: variable 'nonConstPointerToMember' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
-// CHECK-MESSAGES: :[[@LINE-2]]:6: warning: variable 'nonConstPointerToMember' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-MESSAGES: :[[@LINE-3]]:6: warning: variable 'nonConstPointerToMember' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// TODO
+
 int *const constPointerToNonConstMember = &nonConstClassInstance.nonConstPublicMemberVariable;
 // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'constPointerToNonConstMember' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: const int *const constPointerToNonConstMember = &nonConstClassInstance.nonConstPublicMemberVariable;
 
 const DummyClass constClassInstance;
 
 DummyClass *const constPointerToNonConstDummyClass = &nonConstClassInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: variable 'constPointerToNonConstDummyClass' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: const DummyClass *const constPointerToNonConstDummyClass = &nonConstClassInstance;
 
 const DummyClass *nonConstPointerToConstDummyClass = &constClassInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: variable 'nonConstPointerToConstDummyClass' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: const DummyClass *const nonConstPointerToConstDummyClass = &constClassInstance;
 
 const DummyClass *const constPointerToConstDummyClass = &constClassInstance;
 
@@ -85,6 +99,7 @@ const DummyClass &constReferenceToDummyClass = constClassInstance;
 namespace namespace_name {
 DummyClass nonConstNamespaceClassInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'nonConstNamespaceClassInstance' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: DummyClass const nonConstNamespaceClassInstance;
 
 const DummyClass constDummyClassInstance;
 } // namespace namespace_name
@@ -97,21 +112,26 @@ enum DummyEnum {
 
 DummyEnum nonConstDummyEnumInstance = DummyEnum::first;
 // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: variable 'nonConstDummyEnumInstance' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: DummyEnum const nonConstDummyEnumInstance = DummyEnum::first;
 
 DummyEnum *pointerToNonConstDummyEnum = &nonConstDummyEnumInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'pointerToNonConstDummyEnum' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
-// CHECK-MESSAGES: :[[@LINE-2]]:12: warning: variable 'pointerToNonConstDummyEnum' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-MESSAGES: :[[@LINE-3]]:12: warning: variable 'pointerToNonConstDummyEnum' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// TODO
 
 DummyEnum &referenceToNonConstDummyEnum = nonConstDummyEnumInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'referenceToNonConstDummyEnum' provides global access to a non-const object; consider making the referenced data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: const DummyEnum &referenceToNonConstDummyEnum = nonConstDummyEnumInstance;
 
 DummyEnum *const constPointerToNonConstDummyEnum = &nonConstDummyEnumInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: variable 'constPointerToNonConstDummyEnum' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: const DummyEnum *const constPointerToNonConstDummyEnum = &nonConstDummyEnumInstance;
 
 const DummyEnum constDummyEnumInstance = DummyEnum::first;
 
 const DummyEnum *nonConstPointerToConstDummyEnum = &constDummyEnumInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: variable 'nonConstPointerToConstDummyEnum' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: const DummyEnum *const nonConstPointerToConstDummyEnum = &constDummyEnumInstance;
 
 const DummyEnum *const constPointerToConstDummyEnum = &constDummyEnumInstance;
 
@@ -120,6 +140,7 @@ const DummyEnum &referenceToConstDummyEnum = constDummyEnumInstance;
 namespace namespace_name {
 DummyEnum nonConstNamespaceEnumInstance = DummyEnum::first;
 // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: variable 'nonConstNamespaceEnumInstance' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: DummyEnum const nonConstNamespaceEnumInstance = DummyEnum::first;
 
 const DummyEnum constNamespaceEnumInstance = DummyEnum::first;
 } // namespace namespace_name
@@ -128,6 +149,7 @@ namespace {
 DummyEnum nonConstAnonymousNamespaceEnumInstance = DummyEnum::first;
 }
 // CHECK-MESSAGES: :[[@LINE-2]]:11: warning: variable 'nonConstAnonymousNamespaceEnumInstance' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-FIXES: DummyEnum const nonConstAnonymousNamespaceEnumInstance = DummyEnum::first;
 
 // CHECKING FOR NON-CONST GLOBAL STRUCT ///////////////////////////////////////
 struct DummyStruct {
@@ -148,6 +170,7 @@ DummyStruct *pointerToNonConstDummyStruct = &nonConstDummyStructInstance;
 
 DummyStruct &referenceToNonConstDummyStruct = nonConstDummyStructInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: variable 'referenceToNonConstDummyStruct' provides global access to a non-const object; consider making the referenced data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+
 DummyStruct *const constPointerToNonConstDummyStruct = &nonConstDummyStructInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: variable 'constPointerToNonConstDummyStruct' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
 
