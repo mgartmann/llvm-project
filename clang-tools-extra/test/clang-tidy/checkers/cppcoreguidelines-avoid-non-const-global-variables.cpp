@@ -10,7 +10,7 @@ int &nonConstIntReference = nonConstInt;
 
 int *pointerToNonConstInt = &nonConstInt;
 // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: variable 'pointerToNonConstInt' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
-// CHECK-MESSAGES: :[[@LINE-3]]:6: warning: variable 'pointerToNonConstInt' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-MESSAGES: :[[@LINE-2]]:6: warning: variable 'pointerToNonConstInt' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
 // TODO
 
 int *const constPointerToNonConstInt = &nonConstInt;
