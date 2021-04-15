@@ -11,7 +11,6 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
-#include <iostream>
 
 using namespace clang::ast_matchers;
 
@@ -52,14 +51,14 @@ void AvoidNonConstGlobalVariablesCheck::check(
   if (const auto *Variable =
           Result.Nodes.getNodeAs<VarDecl>("non-const_variable")) {
 
-    auto TypeBeginLoc = Variable->getBeginLoc();
-    auto TypeEndLoc = Variable->getBeginLoc().getLocWithOffset(
-        Variable->getType().getAsString().length());
+    /// \p PrintingPolicy is needed to suppress the "class" keyword in a class
+    /// instance's type.
+    PrintingPolicy PrintingPolicy{getLangOpts()};
+    PrintingPolicy.SuppressSpecifiers = false;
 
-    auto ReplacementRange =
-        CharSourceRange::getCharRange(TypeBeginLoc, TypeEndLoc);
-
-    auto Replacement = getConstTypeAsString(Result, Variable);
+    auto ReplacementRange = generateReplacementRange(*Variable, PrintingPolicy);
+    auto Replacement =
+        generateReplacementString(Result, *Variable, PrintingPolicy);
 
     diag(Variable->getLocation(), "variable %0 is non-const and globally "
                                   "accessible, consider making it const")
@@ -75,33 +74,54 @@ void AvoidNonConstGlobalVariablesCheck::check(
     diag(VD->getLocation(),
          "variable %0 provides global access to a non-const object; consider "
          "making the %select{referenced|pointed-to}1 data 'const'")
-        << VD << VD->getType()->isPointerType() << FixItHint::CreateInsertion(VD->getBeginLoc(), "const ");
+        << VD << VD->getType()->isPointerType()
+        << FixItHint::CreateInsertion(VD->getBeginLoc(), "const ");
   }
 }
 
-std::string AvoidNonConstGlobalVariablesCheck::getConstTypeAsString(
-    const MatchFinder::MatchResult &Result, const VarDecl *Variable) const {
+/// Makes the provided type constant and converts it to a string.
+/// If the current type sticks to the variable name as in the example below, a
+/// space is inserted:
+//
+/// \code
+/// int *y = &x;
+///     ^^
+/// \endcode
+///
+/// \param PrintingPolicy needed for class instance edge-case so that the
+/// "class" keyword is not included in the string.
+/// \returns string representation of the constant type of \p Variable.
+std::string AvoidNonConstGlobalVariablesCheck::generateReplacementString(
+    const MatchFinder::MatchResult &Result, const VarDecl &Variable,
+    const PrintingPolicy &PrintingPolicy) const {
 
-  auto Type = Variable->getType();
-  bool HasSpace = hasSpaceAfterType(Result, Variable, Type);
+  auto Type = Variable.getType();
+  bool HasSpace =
+      hasSpaceAfterType(Result, Variable, Type.getAsString(PrintingPolicy));
   Type.addConst();
 
-  return Type.getAsString() + std::string(HasSpace ? "" : " ");
+  return Type.getAsString(PrintingPolicy) + std::string(HasSpace ? "" : " ");
 }
 
 bool AvoidNonConstGlobalVariablesCheck::hasSpaceAfterType(
-    const MatchFinder::MatchResult &Result, const VarDecl *Variable,
-    const QualType &OldType) const {
+    const MatchFinder::MatchResult &Result, const VarDecl &Variable,
+    const std::string &NonConstType) const {
 
   StringRef VariableText = Lexer::getSourceText(
-      CharSourceRange::getTokenRange(Variable->getSourceRange()),
+      CharSourceRange::getTokenRange(Variable.getSourceRange()),
       *Result.SourceManager, getLangOpts());
 
-  if (OldType.getAsString().find("class") == 0) {
-    return true;
-  }
+  return VariableText.str().at(NonConstType.length()) == ' ';
+}
 
-  return VariableText.str().at(OldType.getAsString().length()) == ' ';
+CharSourceRange AvoidNonConstGlobalVariablesCheck::generateReplacementRange(
+    const VarDecl &Variable, const PrintingPolicy &PrintingPolicy) const {
+
+  auto TypeBeginLoc = Variable.getBeginLoc();
+  auto TypeEndLoc = TypeBeginLoc.getLocWithOffset(
+      Variable.getType().getAsString(PrintingPolicy).length());
+
+  return CharSourceRange::getCharRange(TypeBeginLoc, TypeEndLoc);
 }
 
 } // namespace cppcoreguidelines
