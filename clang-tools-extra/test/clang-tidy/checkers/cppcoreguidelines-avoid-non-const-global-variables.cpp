@@ -2,7 +2,7 @@
 
 int nonConstInt = 0;
 // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: variable 'nonConstInt' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
-// CHECK-FIXES: int const nonConstInt = 0;
+// CHECK-FIXES: const int nonConstInt = 0;
 
 int &nonConstIntReference = nonConstInt;
 // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: variable 'nonConstIntReference' provides global access to a non-const object; consider making the referenced data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
@@ -11,7 +11,7 @@ int &nonConstIntReference = nonConstInt;
 int *pointerToNonConstInt = &nonConstInt;
 // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: variable 'pointerToNonConstInt' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
 // CHECK-MESSAGES: :[[@LINE-2]]:6: warning: variable 'pointerToNonConstInt' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
-// TODO
+// const int *const pointerToNonConstInt = &nonConstInt;
 
 int *const constPointerToNonConstInt = &nonConstInt;
 // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'constPointerToNonConstInt' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
@@ -20,7 +20,7 @@ int *const constPointerToNonConstInt = &nonConstInt;
 namespace namespace_name {
 int nonConstNamespaceInt = 0;
 // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: variable 'nonConstNamespaceInt' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
-// CHECK-FIXES: int const nonConstNamespaceInt = 0;
+// CHECK-FIXES: const int nonConstNamespaceInt = 0;
 
 const int constNamespaceInt = 0;
 } // namespace namespace_name
@@ -45,7 +45,7 @@ int function() {
 namespace {
 int nonConstAnonymousNamespaceInt = 0;
 // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: variable 'nonConstAnonymousNamespaceInt' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
-// CHECK-FIXES: int const nonConstAnonymousNamespaceInt = 0;
+// CHECK-FIXES: const int nonConstAnonymousNamespaceInt = 0;
 } // namespace
 
 class DummyClass {

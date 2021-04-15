@@ -10,6 +10,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
+#include "clang/Lex/Lexer.h"
+#include <iostream>
 
 using namespace clang::ast_matchers;
 
@@ -49,10 +51,21 @@ void AvoidNonConstGlobalVariablesCheck::check(
 
   if (const auto *Variable =
           Result.Nodes.getNodeAs<VarDecl>("non-const_variable")) {
+
+    auto TypeBeginLoc = Variable->getBeginLoc();
+    auto TypeEndLoc = Variable->getBeginLoc().getLocWithOffset(
+        Variable->getType().getAsString().length());
+
+    auto ReplacementRange =
+        CharSourceRange::getCharRange(TypeBeginLoc, TypeEndLoc);
+
+    auto Replacement = getConstTypeAsString(Result, Variable);
+
     diag(Variable->getLocation(), "variable %0 is non-const and globally "
                                   "accessible, consider making it const")
         << Variable
-        << FixItHint::CreateInsertion(Variable->getLocation(), "const ");
+        << FixItHint::CreateReplacement(ReplacementRange, Replacement);
+
     // Don't return early, a non-const variable may also be a pointer or
     // reference to non-const data.
   }
@@ -62,10 +75,33 @@ void AvoidNonConstGlobalVariablesCheck::check(
     diag(VD->getLocation(),
          "variable %0 provides global access to a non-const object; consider "
          "making the %select{referenced|pointed-to}1 data 'const'")
-        << VD << VD->getType()->isPointerType()
-        << FixItHint::CreateInsertion(VD->getSourceRange().getBegin(),
-                                      "const ");
+        << VD << VD->getType()->isPointerType() << FixItHint::CreateInsertion(VD->getBeginLoc(), "const ");
   }
+}
+
+std::string AvoidNonConstGlobalVariablesCheck::getConstTypeAsString(
+    const MatchFinder::MatchResult &Result, const VarDecl *Variable) const {
+
+  auto Type = Variable->getType();
+  bool HasSpace = hasSpaceAfterType(Result, Variable, Type);
+  Type.addConst();
+
+  return Type.getAsString() + std::string(HasSpace ? "" : " ");
+}
+
+bool AvoidNonConstGlobalVariablesCheck::hasSpaceAfterType(
+    const MatchFinder::MatchResult &Result, const VarDecl *Variable,
+    const QualType &OldType) const {
+
+  StringRef VariableText = Lexer::getSourceText(
+      CharSourceRange::getTokenRange(Variable->getSourceRange()),
+      *Result.SourceManager, getLangOpts());
+
+  if (OldType.getAsString().find("class") == 0) {
+    return true;
+  }
+
+  return VariableText.str().at(OldType.getAsString().length()) == ' ';
 }
 
 } // namespace cppcoreguidelines
