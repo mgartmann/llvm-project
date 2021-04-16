@@ -118,6 +118,12 @@ Changes in existing checks
   function or assignment to ``nullptr``.
   Added support for pointers to ``std::unique_ptr``.
 
+- Improved :doc:`cppcoreguidelines-avoid-non-const-global-variables
+  <clang-tidy/checks/cppcoreguidelines-avoid-non-const-global-variables` check.
+
+  Added ``FixItHints`` to the checks which make the problematic variables, pointers 
+  and references constant.
+
 Removed checks
 ^^^^^^^^^^^^^^
 
