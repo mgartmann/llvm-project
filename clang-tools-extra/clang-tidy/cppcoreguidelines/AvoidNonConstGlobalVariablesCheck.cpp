@@ -129,7 +129,7 @@ std::string AvoidNonConstGlobalVariablesCheck::printCleanedType(
   std::string PolicyCleanedType = Type.getAsString(PrintingPolicy);
 
   std::string StringToErase = " (unnamed)";
-  int StartPositionToErase = PolicyCleanedType.find(StringToErase);
+  size_t StartPositionToErase = PolicyCleanedType.find(StringToErase);
 
   if (StartPositionToErase == std::string::npos)
     return PolicyCleanedType;
