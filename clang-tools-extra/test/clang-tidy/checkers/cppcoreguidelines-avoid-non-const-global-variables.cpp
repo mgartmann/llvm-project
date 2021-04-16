@@ -152,14 +152,27 @@ DummyEnum nonConstAnonymousNamespaceEnumInstance = DummyEnum::first;
 // CHECK-FIXES: const DummyEnum nonConstAnonymousNamespaceEnumInstance = DummyEnum::first;
 
 // CHECKING FOR NON-CONST GLOBAL STRUCT ///////////////////////////////////////
-struct DummyStruct {
+struct {
+  // CHECK-FIXES: const struct {
 public:
   int structIntElement = 0;
   const int constStructIntElement = 0;
 
 private:
   int privateStructIntElement = 0;
-};
+} nonConstUnnamedStructInstance{};
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: variable 'nonConstUnnamedStructInstance' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+
+struct DummyStruct {
+  // CHECK-FIXES: const struct DummyStruct {
+public:
+  int structIntElement = 0;
+  const int constStructIntElement = 0;
+
+private:
+  int privateStructIntElement = 0;
+} directNonConstDummyStructInstance{};
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: variable 'directNonConstDummyStructInstance' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
 
 DummyStruct nonConstDummyStructInstance;
 // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: variable 'nonConstDummyStructInstance' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]

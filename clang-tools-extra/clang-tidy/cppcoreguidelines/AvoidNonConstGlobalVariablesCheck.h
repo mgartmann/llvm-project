@@ -22,17 +22,17 @@ namespace cppcoreguidelines {
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-avoid-non-const-global-variables.html
 class AvoidNonConstGlobalVariablesCheck : public ClangTidyCheck {
+  std::string generateReplacementString(
+      const ast_matchers::MatchFinder::MatchResult &Result,
+      const VarDecl &Variablee) const;
+
   bool hasSpaceAfterType(const ast_matchers::MatchFinder::MatchResult &Result,
                          const VarDecl &Variable,
                          const std::string &NonConstType) const;
 
-  std::string generateReplacementString(
-      const ast_matchers::MatchFinder::MatchResult &Result,
-      const VarDecl &Variablee, const PrintingPolicy &PrintingPolicy) const;
+  CharSourceRange generateReplacementRange(const VarDecl &Variable) const;
 
-  CharSourceRange
-  generateReplacementRange(const VarDecl &Variable,
-                           const PrintingPolicy &PrintingPolicy) const;
+  std::string printCleanedType(const QualType &Type) const;
 
 public:
   AvoidNonConstGlobalVariablesCheck(StringRef Name, ClangTidyContext *Context)

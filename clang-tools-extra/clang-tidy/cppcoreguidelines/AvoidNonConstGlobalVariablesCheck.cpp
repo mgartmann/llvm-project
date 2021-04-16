@@ -51,14 +51,8 @@ void AvoidNonConstGlobalVariablesCheck::check(
   if (const auto *Variable =
           Result.Nodes.getNodeAs<VarDecl>("non-const_variable")) {
 
-    /// \p PrintingPolicy is needed to suppress the "class" keyword in a class
-    /// instance's type.
-    PrintingPolicy PrintingPolicy{getLangOpts()};
-    PrintingPolicy.SuppressSpecifiers = false;
-
-    auto ReplacementRange = generateReplacementRange(*Variable, PrintingPolicy);
-    auto Replacement =
-        generateReplacementString(Result, *Variable, PrintingPolicy);
+    auto ReplacementRange = generateReplacementRange(*Variable);
+    auto Replacement = generateReplacementString(Result, *Variable);
 
     diag(Variable->getLocation(), "variable %0 is non-const and globally "
                                   "accessible, consider making it const")
@@ -88,19 +82,14 @@ void AvoidNonConstGlobalVariablesCheck::check(
 ///     ^^
 /// \endcode
 ///
-/// \param PrintingPolicy needed for class instance edge-case so that the
-/// "class" keyword is not included in the string.
 /// \returns string representation of the constant type of \p Variable.
 std::string AvoidNonConstGlobalVariablesCheck::generateReplacementString(
-    const MatchFinder::MatchResult &Result, const VarDecl &Variable,
-    const PrintingPolicy &PrintingPolicy) const {
+    const MatchFinder::MatchResult &Result, const VarDecl &Variable) const {
 
   auto Type = Variable.getType();
-  bool HasSpace =
-      hasSpaceAfterType(Result, Variable, Type.getAsString(PrintingPolicy));
+  bool HasSpace = hasSpaceAfterType(Result, Variable, printCleanedType(Type));
   Type.addConst();
-
-  return Type.getAsString(PrintingPolicy) + std::string(HasSpace ? "" : " ");
+  return printCleanedType(Type) + (HasSpace ? "" : " ");
 }
 
 bool AvoidNonConstGlobalVariablesCheck::hasSpaceAfterType(
@@ -115,13 +104,37 @@ bool AvoidNonConstGlobalVariablesCheck::hasSpaceAfterType(
 }
 
 CharSourceRange AvoidNonConstGlobalVariablesCheck::generateReplacementRange(
-    const VarDecl &Variable, const PrintingPolicy &PrintingPolicy) const {
+    const VarDecl &Variable) const {
 
   auto TypeBeginLoc = Variable.getBeginLoc();
+
   auto TypeEndLoc = TypeBeginLoc.getLocWithOffset(
-      Variable.getType().getAsString(PrintingPolicy).length());
+      printCleanedType(Variable.getType()).length());
 
   return CharSourceRange::getCharRange(TypeBeginLoc, TypeEndLoc);
+}
+
+/// Creates a string representation of \p Type and suppresses the \c class
+/// keyword in a class instance's type. Also, on unnamed types, the tag location
+/// and the \c unnamed keyword are removed from the type description.
+/// If this would not be done, those keywords would be inserted into the source
+/// code as part of the \c FixItHint replacement.
+std::string AvoidNonConstGlobalVariablesCheck::printCleanedType(
+    const QualType &Type) const {
+
+  /// \c PrintingPolicy suppresses the "class" keyword in a class
+  /// instance's type and to suppress locations of anonymous tags.
+  PrintingPolicy PrintingPolicy{getLangOpts()};
+  PrintingPolicy.AnonymousTagLocations = false;
+  std::string PolicyCleanedType = Type.getAsString(PrintingPolicy);
+
+  std::string StringToErase = " (unnamed)";
+  int StartPositionToErase = PolicyCleanedType.find(StringToErase);
+
+  if (StartPositionToErase == std::string::npos)
+    return PolicyCleanedType;
+
+  return PolicyCleanedType.erase(StartPositionToErase, StringToErase.length());
 }
 
 } // namespace cppcoreguidelines
