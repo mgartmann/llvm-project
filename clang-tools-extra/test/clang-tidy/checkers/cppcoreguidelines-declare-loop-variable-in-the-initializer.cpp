@@ -24,7 +24,7 @@ void func2() {
 
 void func3() {
   // CHECK-MESSAGES: :[[@LINE+2]]:7: warning: Variable 'I' is only modified in a for statement and not used elsewhere. Consider declaring it inside the for statement. [cppcoreguidelines-declare-loop-variable-in-the-initializer]
-  // CHECK-MESSAGES: :30:7: note: Variable gets modified here
+  // CHECK-MESSAGES: :30:8: note: Variable gets modified here
   int I{0};
 
   for (I = 1; I < Limit; I++) {
@@ -33,7 +33,7 @@ void func3() {
 
 void func4() {
   // CHECK-MESSAGES: :[[@LINE+2]]:7: warning: Variable 'I' is only modified in a for statement and not used elsewhere. Consider declaring it inside the for statement. [cppcoreguidelines-declare-loop-variable-in-the-initializer]
-  // CHECK-MESSAGES: :38:20: note: Variable gets modified here
+  // CHECK-MESSAGES: :39:21: note: Variable gets modified here
   int I{0};
 
   for (; I < Limit; I++) {
@@ -42,7 +42,7 @@ void func4() {
 
 void func5() {
   // CHECK-MESSAGES: :[[@LINE+2]]:7: warning: Variable 'I' is only modified in a for statement and not used elsewhere. Consider declaring it inside the for statement. [cppcoreguidelines-declare-loop-variable-in-the-initializer]
-  // CHECK-MESSAGES: :46:33: note: Variable gets modified here
+  // CHECK-MESSAGES: :48:34: note: Variable gets modified here
   int I{0};
 
   for (int Unused{0}; I < Limit; I++) {
