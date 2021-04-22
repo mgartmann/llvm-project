@@ -90,8 +90,9 @@ void DeclareLoopVariableInTheInitializerCheck::check(
   }
 
   diag(MatchedVarDecl->getLocation(),
-       "This variable is only modified in a for statement and not used "
-       "elsewhere. Consider declaring it inside the for statement.");
+       "Variable %0 is only modified in a for statement and not used "
+       "elsewhere. Consider declaring it inside the for statement.")
+      << MatchedVarDecl;
   diag(MatchedExprOperator->getBeginLoc(), "Variable gets modified here",
        DiagnosticIDs::Note);
 }
