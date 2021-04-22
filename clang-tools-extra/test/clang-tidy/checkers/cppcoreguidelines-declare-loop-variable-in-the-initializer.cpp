@@ -7,7 +7,7 @@ void func1() {
   // CHECK-MESSAGES: :11:5: note: Variable gets modified here
   int A{0};
 
-  for(int I{0}; I < Limit; I++) {
+  for (int I{0}; I < Limit; I++) {
     A = 3;
   }
 }
@@ -17,7 +17,7 @@ void func2() {
   // CHECK-MESSAGES: :21:5: note: Variable gets modified here
   int A{0};
 
-  for(int I{0}; I < Limit; I++) {
+  for (int I{0}; I < Limit; I++) {
     A += 3;
   }
 }
@@ -27,7 +27,8 @@ void func3() {
   // CHECK-MESSAGES: :30:7: note: Variable gets modified here
   int I{0};
 
-  for(I = 1; I < Limit; I++) {}
+  for (I = 1; I < Limit; I++) {
+  }
 }
 
 void func4() {
@@ -35,7 +36,8 @@ void func4() {
   // CHECK-MESSAGES: :38:20: note: Variable gets modified here
   int I{0};
 
-  for(; I < Limit; I++) {}
+  for (; I < Limit; I++) {
+  }
 }
 
 void func5() {
@@ -43,14 +45,15 @@ void func5() {
   // CHECK-MESSAGES: :46:33: note: Variable gets modified here
   int I{0};
 
-  for(int Unused{0}; I < Limit; I++) {}
+  for (int Unused{0}; I < Limit; I++) {
+  }
 }
 
 void func6() {
   // OK
   int A{0};
 
-  for(int I{0}; I < Limit; I++) {
+  for (int I{0}; I < Limit; I++) {
     const int B{A};
   }
 }
