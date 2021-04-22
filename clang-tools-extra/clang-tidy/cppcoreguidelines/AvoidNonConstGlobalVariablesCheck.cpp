@@ -106,7 +106,7 @@ bool AvoidNonConstGlobalVariablesCheck::hasSpaceAfterType(
   /// information. As a fallback, it is assumed that the type is not followed by
   /// a space in the source code.
   if (VariableText.str().length() < NonConstType.length()) {
-    llvm::errs() << "Checking for blankspace failed: the type's effective "
+    llvm::errs() << "Checking for space failed: the type's effective "
                     "length is greater than the variable declaration.";
     return false;
   }
@@ -126,26 +126,29 @@ CharSourceRange AvoidNonConstGlobalVariablesCheck::generateReplacementRange(
 }
 
 /// Creates a string representation of \p Type and suppresses the \c class
-/// keyword in a class instance's type. Also, on unnamed types, the tag location
-/// and the \c unnamed keyword are removed from the type description.
-/// If this would not be done, those keywords would be inserted into the source
-/// code as part of the \c FixItHint replacement.
+/// keyword in a class instance's type. Also, on unnamed/anonymous types, the
+/// tag location and the \c unnamed or \c anonymous keyword are removed from the
+/// type description. If this would not be done, those keywords would be
+/// inserted into the source code as part of the \c FixItHint replacement.
 std::string AvoidNonConstGlobalVariablesCheck::printCleanedType(
     const QualType &Type) const {
 
   /// \c PrintingPolicy suppresses the "class" keyword in a class
-  /// instance's type and to suppress locations of anonymous tags.
+  /// instance's type and locations of anonymous tags.
   PrintingPolicy PrintingPolicy{getLangOpts()};
   PrintingPolicy.AnonymousTagLocations = false;
   std::string PolicyCleanedType = Type.getAsString(PrintingPolicy);
 
-  std::string StringToErase = " (unnamed)";
-  size_t StartPositionToErase = PolicyCleanedType.find(StringToErase);
+  auto StringsToErase = SmallVector<std::string>{" (unnamed)", " (anonymous)"};
 
-  if (StartPositionToErase == std::string::npos)
-    return PolicyCleanedType;
+  for (std::string StringToErase : StringsToErase) {
+    size_t StartPositionToErase = PolicyCleanedType.find(StringToErase);
+    if (StartPositionToErase == std::string::npos)
+      continue;
+    PolicyCleanedType.erase(StartPositionToErase, StringToErase.length());
+  }
 
-  return PolicyCleanedType.erase(StartPositionToErase, StringToErase.length());
+  return PolicyCleanedType;
 }
 
 } // namespace cppcoreguidelines
