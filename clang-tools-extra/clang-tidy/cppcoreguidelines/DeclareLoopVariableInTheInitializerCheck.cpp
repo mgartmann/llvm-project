@@ -17,90 +17,83 @@ namespace clang {
 namespace tidy {
 namespace cppcoreguidelines {
 
-class IsOutsideForStmtVisitor
-    : public RecursiveASTVisitor<IsOutsideForStmtVisitor> {
-  friend class RecursiveASTVisitor<IsOutsideForStmtVisitor>;
+class OutsideForStmtVisitor
+    : public RecursiveASTVisitor<OutsideForStmtVisitor> {
+  friend class RecursiveASTVisitor<OutsideForStmtVisitor>;
 
 public:
-  IsOutsideForStmtVisitor(const ForStmt *ForStmt, const VarDecl *VarDecl,
-                          const MatchFinder::MatchResult &Result)
-      : ForLoop(ForStmt), Declaration(VarDecl), externResult(Result),
-        IsOutsideForStmt(false) {}
+  OutsideForStmtVisitor(const ForStmt *ForStmt, const VarDecl *VarDecl,
+                        const MatchFinder::MatchResult &Result)
+      : MatchedForStmt(ForStmt), MatchedDecl(VarDecl), MatchedResult(Result),
+        IsOutsideMatchedForStmt(false) {}
 
   bool hasDeclRefExpOutside(const TranslationUnitDecl *TransUnit) {
-    // Find out more about TraverseDecl
     TraverseDecl(const_cast<TranslationUnitDecl *>(TransUnit));
-    return IsOutsideForStmt;
+    return IsOutsideMatchedForStmt;
   }
 
 private:
   bool VisitDeclRefExpr(DeclRefExpr *D) {
     if (const VarDecl *To = dyn_cast<VarDecl>(D->getDecl())) {
-      if (To == Declaration) {
-        IsOutsideForStmt =
-            !IsInsideForLoop(externResult, DynTypedNode::create(*D));
-        if (IsOutsideForStmt) {
-          return false;
-        }
+      if (To == MatchedDecl &&
+          !IsInsideMatchedForStmt(MatchedResult, DynTypedNode::create(*D))) {
+        IsOutsideMatchedForStmt = true;
+        return false;
       }
     }
     return true;
   }
 
-  // IsInsideMatchedForLoop
-  bool IsInsideForLoop(const MatchFinder::MatchResult &Result,
-                       const DynTypedNode &Node) {
-    const auto *AsForStmt = Node.get<ForStmt>();
+  bool IsInsideMatchedForStmt(const MatchFinder::MatchResult &Result,
+                              const DynTypedNode &Node) {
+    const auto *PossibleForStmt = Node.get<ForStmt>();
 
-    if (AsForStmt && AsForStmt == ForLoop) {
+    if (PossibleForStmt && PossibleForStmt == MatchedForStmt) {
       return true;
     }
 
     return llvm::any_of(Result.Context->getParents(Node),
                         [&](const DynTypedNode &Parent) {
-                          return IsInsideForLoop(Result, Parent);
+                          return IsInsideMatchedForStmt(Result, Parent);
                         });
   }
 
-  const ForStmt *ForLoop;
-  const VarDecl *Declaration;
-  const MatchFinder::MatchResult &externResult;
-  bool IsOutsideForStmt;
+  const ForStmt *MatchedForStmt;
+  const VarDecl *MatchedDecl;
+  const MatchFinder::MatchResult &MatchedResult;
+  bool IsOutsideMatchedForStmt;
 };
 
 void DeclareLoopVariableInTheInitializerCheck::registerMatchers(
     MatchFinder *Finder) {
   Finder->addMatcher(
       declRefExpr(
-          hasAncestor(forStmt().bind("ForStmt")), // is in for statement
-          anyOf(hasAncestor(unaryOperator()),     // gets modified
+          hasAncestor(forStmt().bind("ForStmt")),
+          anyOf(hasAncestor(unaryOperator().bind("Operator")),
                 hasAncestor(
-                    binaryOperator(hasOperatorName("=")))), // gets modified
+                    binaryOperator(isAssignmentOperator()).bind("Operator"))),
           to(varDecl(unless(hasAncestor(forStmt(equalsBoundNode("ForStmt")))))
-                 .bind("VarDecl"))) // is declared outside a for statement
-          .bind("DeclRefExpr"),
+                 .bind("VarDecl"))),
       this);
 }
 
 void DeclareLoopVariableInTheInitializerCheck::check(
     const MatchFinder::MatchResult &Result) {
   const auto *MatchedForStmt = Result.Nodes.getNodeAs<ForStmt>("ForStmt");
+  const auto *MatchedExprOperator = Result.Nodes.getNodeAs<Expr>("Operator");
   const auto *MatchedVarDecl = Result.Nodes.getNodeAs<VarDecl>("VarDecl");
-  const auto *MatchedDeclRefExpr =
-      Result.Nodes.getNodeAs<DeclRefExpr>("DeclRefExpr");
-
-  // Maybe just the next Compound Stmt fo the VarDecl?
   const auto TransUnit = Result.Context->getTranslationUnitDecl();
 
-  if (IsOutsideForStmtVisitor(MatchedForStmt, MatchedVarDecl, Result)
+  if (OutsideForStmtVisitor(MatchedForStmt, MatchedVarDecl, Result)
           .hasDeclRefExpOutside(TransUnit)) {
     return;
   }
 
-  diag(MatchedForStmt->getBeginLoc(),
-       "The variable %0 gets modified in this for loop statment, but is not "
-       "declared in it. The Variable is also not needed outside the loop.")
-      << MatchedDeclRefExpr->getDecl();
+  diag(MatchedVarDecl->getLocation(),
+       "This variable is only modified in a for statement and not used "
+       "elsewhere. Consider declaring it inside the for statement.");
+  diag(MatchedExprOperator->getBeginLoc(), "Variable gets modified here",
+       DiagnosticIDs::Note);
 }
 
 } // namespace cppcoreguidelines
