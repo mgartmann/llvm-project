@@ -105,7 +105,7 @@ bool AvoidNonConstGlobalVariablesCheck::hasSpaceAfterType(
   /// used in \c printCleanedType did not remove all superfluous type
   /// information. As a fallback, it is assumed that the type is not followed by
   /// a space in the source code.
-  if (VariableText.str().length() < NonConstType.length()) {
+  if (NonConstType.length() > VariableText.str().length()) {
     llvm::errs() << "Checking for space failed: the type's effective "
                     "length is greater than the variable declaration.";
     return false;
@@ -119,8 +119,8 @@ CharSourceRange AvoidNonConstGlobalVariablesCheck::generateReplacementRange(
 
   auto TypeBeginLoc = Variable.getBeginLoc();
 
-  auto TypeEndLoc = TypeBeginLoc.getLocWithOffset(
-      cleanType(Variable.getType()).length());
+  auto TypeEndLoc =
+      TypeBeginLoc.getLocWithOffset(cleanType(Variable.getType()).length());
 
   return CharSourceRange::getCharRange(TypeBeginLoc, TypeEndLoc);
 }
@@ -130,8 +130,8 @@ CharSourceRange AvoidNonConstGlobalVariablesCheck::generateReplacementRange(
 /// tag location and the \c unnamed or \c anonymous keyword are removed from the
 /// type description. If this would not be done, those keywords would be
 /// inserted into the source code as part of the \c FixItHint replacement.
-std::string AvoidNonConstGlobalVariablesCheck::cleanType(
-    const QualType &Type) const {
+std::string
+AvoidNonConstGlobalVariablesCheck::cleanType(const QualType &Type) const {
 
   /// \c PrintingPolicy suppresses the "class" keyword in a class
   /// instance's type and locations of anonymous tags.
