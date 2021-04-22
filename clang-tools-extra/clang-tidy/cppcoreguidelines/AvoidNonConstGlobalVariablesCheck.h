@@ -32,7 +32,7 @@ class AvoidNonConstGlobalVariablesCheck : public ClangTidyCheck {
 
   CharSourceRange generateReplacementRange(const VarDecl &Variable) const;
 
-  std::string printCleanedType(const QualType &Type) const;
+  std::string cleanType(const QualType &Type) const;
 
 public:
   AvoidNonConstGlobalVariablesCheck(StringRef Name, ClangTidyContext *Context)

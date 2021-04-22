@@ -87,9 +87,9 @@ std::string AvoidNonConstGlobalVariablesCheck::generateReplacementString(
     const MatchFinder::MatchResult &Result, const VarDecl &Variable) const {
 
   auto Type = Variable.getType();
-  bool HasSpace = hasSpaceAfterType(Result, Variable, printCleanedType(Type));
+  bool HasSpace = hasSpaceAfterType(Result, Variable, cleanType(Type));
   Type.addConst();
-  return printCleanedType(Type) + (HasSpace ? "" : " ");
+  return cleanType(Type) + (HasSpace ? "" : " ");
 }
 
 bool AvoidNonConstGlobalVariablesCheck::hasSpaceAfterType(
@@ -120,7 +120,7 @@ CharSourceRange AvoidNonConstGlobalVariablesCheck::generateReplacementRange(
   auto TypeBeginLoc = Variable.getBeginLoc();
 
   auto TypeEndLoc = TypeBeginLoc.getLocWithOffset(
-      printCleanedType(Variable.getType()).length());
+      cleanType(Variable.getType()).length());
 
   return CharSourceRange::getCharRange(TypeBeginLoc, TypeEndLoc);
 }
@@ -130,7 +130,7 @@ CharSourceRange AvoidNonConstGlobalVariablesCheck::generateReplacementRange(
 /// tag location and the \c unnamed or \c anonymous keyword are removed from the
 /// type description. If this would not be done, those keywords would be
 /// inserted into the source code as part of the \c FixItHint replacement.
-std::string AvoidNonConstGlobalVariablesCheck::printCleanedType(
+std::string AvoidNonConstGlobalVariablesCheck::cleanType(
     const QualType &Type) const {
 
   /// \c PrintingPolicy suppresses the "class" keyword in a class
