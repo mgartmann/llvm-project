@@ -100,6 +100,17 @@ bool AvoidNonConstGlobalVariablesCheck::hasSpaceAfterType(
       CharSourceRange::getTokenRange(Variable.getSourceRange()),
       *Result.SourceManager, getLangOpts());
 
+  /// Check to make the function error-robust in case \c NonConstType.length()
+  /// exceeds \c VariableText length. This would occure if the \c PrintingPolicy
+  /// used in \c printCleanedType did not remove all superfluous type
+  /// information. As a fallback, it is assumed that the type is not followed by
+  /// a space in the source code.
+  if (VariableText.str().length() < NonConstType.length()) {
+    llvm::errs() << "Checking for blankspace failed: the type's effective "
+                    "length is greater than the variable declaration.";
+    return false;
+  }
+
   return VariableText.str().at(NonConstType.length()) == ' ';
 }
 
