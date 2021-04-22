@@ -15,8 +15,8 @@ namespace clang {
 namespace tidy {
 namespace cppcoreguidelines {
 
-/// Checks if a loop variable is declared in the initializer part of a
-/// for statement.
+/// Finds variables that are modified inside a ``for`` statement, are not used
+/// elsewhere and are declared outside the ``for`` statement.
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-declare-loop-variable-in-the-initializer.html
