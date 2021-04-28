@@ -11,6 +11,7 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
+#include <locale>
 
 using namespace clang::ast_matchers;
 
@@ -111,7 +112,7 @@ bool AvoidNonConstGlobalVariablesCheck::hasSpaceAfterType(
     return false;
   }
 
-  return VariableText.str().at(NonConstType.length()) == ' ';
+  return std::isspace(VariableText.str().at(NonConstType.length()));
 }
 
 CharSourceRange AvoidNonConstGlobalVariablesCheck::generateReplacementRange(
