@@ -13,9 +13,12 @@ int *pointerToNonConstInt = &nonConstInt;
 // CHECK-MESSAGES: :[[@LINE-2]]:6: warning: variable 'pointerToNonConstInt' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
 // CHECK-FIXES: const int *const pointerToNonConstInt = &nonConstInt;
 
+// clang-format off
+// because the space after * is intended.
 int * pointerToNonConstIntWithSpace = &nonConstInt;
-// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: variable 'pointerToNonConstIntWithSpace' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
-// CHECK-MESSAGES: :[[@LINE-2]]:7: warning: variable 'pointerToNonConstIntWithSpace' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
+// clang-format on
+// CHECK-MESSAGES: :[[@LINE-2]]:7: warning: variable 'pointerToNonConstIntWithSpace' is non-const and globally accessible, consider making it const [cppcoreguidelines-avoid-non-const-global-variables]
+// CHECK-MESSAGES: :[[@LINE-3]]:7: warning: variable 'pointerToNonConstIntWithSpace' provides global access to a non-const object; consider making the pointed-to data 'const' [cppcoreguidelines-avoid-non-const-global-variables]
 // CHECK-FIXES: const int *const pointerToNonConstIntWithSpace = &nonConstInt;
 
 int *const constPointerToNonConstInt = &nonConstInt;
