@@ -95,6 +95,11 @@ New checks
   Finds member initializations in the constructor body which can be placed into
   the initialization list instead.
 
+- New :doc:`cppcoreguidelines-virtual-base-class-destructor
+  <clang-tidy/checks/cppcoreguidelines-virtual-base-class-destructor>` check.
+
+  FIXME: add release notes.
+
 New check aliases
 ^^^^^^^^^^^^^^^^^
 
