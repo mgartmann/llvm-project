@@ -34,9 +34,9 @@ public:
 
 private:
   bool VisitDeclRefExpr(DeclRefExpr *D) {
-    if (const VarDecl *To = dyn_cast<VarDecl>(D->getDecl())) {
+    if (const auto *To = dyn_cast<VarDecl>(D->getDecl())) {
       if (To == MatchedDecl &&
-          !IsInsideMatchedForStmt(MatchedResult, DynTypedNode::create(*D))) {
+          !isInsideMatchedForStmt(MatchedResult, DynTypedNode::create(*D))) {
         IsOutsideMatchedForStmt = true;
         return false;
       }
@@ -44,7 +44,7 @@ private:
     return true;
   }
 
-  bool IsInsideMatchedForStmt(const MatchFinder::MatchResult &Result,
+  bool isInsideMatchedForStmt(const MatchFinder::MatchResult &Result,
                               const DynTypedNode &Node) {
     const auto *PossibleForStmt = Node.get<ForStmt>();
 
@@ -54,7 +54,7 @@ private:
 
     return llvm::any_of(Result.Context->getParents(Node),
                         [&](const DynTypedNode &Parent) {
-                          return IsInsideMatchedForStmt(Result, Parent);
+                          return isInsideMatchedForStmt(Result, Parent);
                         });
   }
 
