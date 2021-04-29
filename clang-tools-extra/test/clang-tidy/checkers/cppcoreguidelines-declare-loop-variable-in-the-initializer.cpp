@@ -50,10 +50,30 @@ void func5() {
 }
 
 void func6() {
+  // CHECK-MESSAGES: :[[@LINE+2]]:7: warning: Variable 'I' is only modified in a for statement and not used elsewhere. Consider declaring it inside the for statement. [cppcoreguidelines-declare-loop-variable-in-the-initializer]
+  // CHECK-MESSAGES: :58:8: note: Variable gets modified here
+  int I{0};
+  int Z{0};
+
+  for (I = 3; I < Limit; I++) {
+  }
+  Z = 3;
+}
+
+void func7() {
   // OK
   int A{0};
 
   for (int I{0}; I < Limit; I++) {
     const int B{A};
   }
+}
+
+void func8() {
+  // OK
+  int I{0};
+
+  for (I = 0; I < Limit; I++) {
+  }
+  const int A{I};
 }
