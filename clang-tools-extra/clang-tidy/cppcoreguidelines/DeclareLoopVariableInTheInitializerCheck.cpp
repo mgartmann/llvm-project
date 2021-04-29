@@ -83,7 +83,8 @@ void DeclareLoopVariableInTheInitializerCheck::check(
   const auto *MatchedForStmt = Result.Nodes.getNodeAs<ForStmt>("ForStmt");
   const auto *MatchedExprOperator = Result.Nodes.getNodeAs<Expr>("Operator");
   const auto *MatchedVarDecl = Result.Nodes.getNodeAs<VarDecl>("VarDecl");
-  const auto *MatchedCompoundStmt = Result.Nodes.getNodeAs<CompoundStmt>("Compound");
+  const auto *MatchedCompoundStmt =
+      Result.Nodes.getNodeAs<CompoundStmt>("Compound");
 
   if (OutsideForStmtVisitor(MatchedForStmt, MatchedVarDecl, Result)
           .hasDeclRefExpOutside(MatchedCompoundStmt)) {
