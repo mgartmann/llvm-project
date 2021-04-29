@@ -27,8 +27,8 @@ public:
       : MatchedForStmt(ForStmt), MatchedDecl(VarDecl), MatchedResult(Result),
         IsOutsideMatchedForStmt(false) {}
 
-  bool hasDeclRefExpOutside(const TranslationUnitDecl *TransUnit) {
-    TraverseDecl(const_cast<TranslationUnitDecl *>(TransUnit));
+  bool hasDeclRefExpOutside(const CompoundStmt *Compound) {
+    TraverseStmt(const_cast<CompoundStmt *>(Compound));
     return IsOutsideMatchedForStmt;
   }
 
@@ -72,7 +72,8 @@ void DeclareLoopVariableInTheInitializerCheck::registerMatchers(
           anyOf(hasAncestor(unaryOperator().bind("Operator")),
                 hasAncestor(
                     binaryOperator(isAssignmentOperator()).bind("Operator"))),
-          to(varDecl(unless(hasAncestor(forStmt(equalsBoundNode("ForStmt")))))
+          to(varDecl(hasAncestor(compoundStmt().bind("Compound")),
+                     unless(hasAncestor(forStmt(equalsBoundNode("ForStmt")))))
                  .bind("VarDecl"))),
       this);
 }
@@ -82,10 +83,10 @@ void DeclareLoopVariableInTheInitializerCheck::check(
   const auto *MatchedForStmt = Result.Nodes.getNodeAs<ForStmt>("ForStmt");
   const auto *MatchedExprOperator = Result.Nodes.getNodeAs<Expr>("Operator");
   const auto *MatchedVarDecl = Result.Nodes.getNodeAs<VarDecl>("VarDecl");
-  const auto TransUnit = Result.Context->getTranslationUnitDecl();
+  const auto *MatchedCompoundStmt = Result.Nodes.getNodeAs<CompoundStmt>("Compound");
 
   if (OutsideForStmtVisitor(MatchedForStmt, MatchedVarDecl, Result)
-          .hasDeclRefExpOutside(TransUnit)) {
+          .hasDeclRefExpOutside(MatchedCompoundStmt)) {
     return;
   }
 
