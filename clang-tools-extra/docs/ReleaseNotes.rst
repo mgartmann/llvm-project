@@ -89,6 +89,11 @@ New checks
   Finds inner loops that have not been unrolled, as well as fully unrolled
   loops with unknown loops bounds or a large number of iterations.
 
+- New :doc:`cppcoreguidelines-avoid-do-while
+  <clang-tidy/checks/cppcoreguidelines-avoid-do-while>` check.
+
+  Checks if a do-while loop exists and flags it.
+
 - New :doc:`cppcoreguidelines-prefer-member-initializer
   <clang-tidy/checks/cppcoreguidelines-prefer-member-initializer>` check.
 
