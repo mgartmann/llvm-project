@@ -98,7 +98,8 @@ New checks
 - New :doc:`cppcoreguidelines-virtual-base-class-destructor
   <clang-tidy/checks/cppcoreguidelines-virtual-base-class-destructor>` check.
 
-  FIXME: add release notes.
+  Finds base classes whose destructor is neither ``public`` and ``virtual`` nor 
+  ``protected`` and non-``virtual``.
 
 New check aliases
 ^^^^^^^^^^^^^^^^^
