@@ -120,8 +120,7 @@ FixItHint VirtualBaseClassDestructorCheck::generateUserDeclaredConstructor(
       .append("virtual ~")
       .append(StructOrClass.getName().str())
       .append("() = default;")
-      .append(AppendLineBreak ? "\n" + indent(ParentIndentation)
-                            : "");
+      .append(AppendLineBreak ? "\n" + indent(ParentIndentation) : "");
 
   return FixItHint::CreateInsertion(Loc, DestructorString);
 }
@@ -140,13 +139,8 @@ AccessSpecDecl *VirtualBaseClassDestructorCheck::getPublicASDecl(
   return nullptr;
 }
 
-std::string
-VirtualBaseClassDestructorCheck::indent(int Indentation) const {
-  auto IndentationString = std::string("");
-  for (int i = 0; i < Indentation; i++) {
-    IndentationString.append(" ");
-  }
-  return IndentationString;
+std::string VirtualBaseClassDestructorCheck::indent(int Indentation) const {
+  return std::string().append(Indentation, ' ');
 }
 
 } // namespace cppcoreguidelines

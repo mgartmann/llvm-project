@@ -44,6 +44,11 @@ This would be rewritten to look like this:
     virtual ~Bar(){};
   };
 
+Fixes are available for user-declared and implicit destructors that are either public
+and non-virtual or protected and virtual. No fixes are offered for private destructors. 
+There, the decision whether to make them private and virtual or protected and non-virtual
+depends on the use case and is thus left to the user.
+
 Options
 -------
 
