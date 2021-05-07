@@ -39,14 +39,7 @@ private:
   const std::vector<std::string> StdIOStreams = {"cin",   "wcin", "cout",
                                                  "wcout", "cerr", "wcerr"};
   const std::vector<std::string> CLikeIOFunctions = {
-    "printf",
-    "vprintf",
-    "puts",
-    "putchar",
-    "scanf",
-    "getchar",
-    "gets"
-  }
+      "printf", "vprintf", "puts", "putchar", "scanf", "getchar", "gets"};
 };
 
 } // namespace misc
