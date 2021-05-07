@@ -10,6 +10,7 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_AVOIDSTDIOOUTSIDEMAINCHECK_H
 
 #include "../ClangTidyCheck.h"
+#include <string>
 
 namespace clang {
 namespace tidy {
@@ -33,6 +34,19 @@ public:
 
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+
+private:
+  const std::vector<std::string> StdIOStreams = {"cin",   "wcin", "cout",
+                                                 "wcout", "cerr", "wcerr"};
+  const std::vector<std::string> CLikeIOFunctions = {
+    "printf",
+    "vprintf",
+    "puts",
+    "putchar",
+    "scanf",
+    "getchar",
+    "gets"
+  }
 };
 
 } // namespace misc

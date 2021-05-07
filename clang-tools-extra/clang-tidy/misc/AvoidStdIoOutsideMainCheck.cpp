@@ -19,19 +19,19 @@ namespace misc {
 
 void AvoidStdIoOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
-      declRefExpr(to(varDecl(hasAnyName("cin", "wcin", "cout", "wcout", "cerr",
-                                        "wcerr"),
+      declRefExpr(to(varDecl(hasAnyName(SmallVector<StringRef>(
+                                 StdIOStreams.begin(), StdIOStreams.end())),
                              isInStdNamespace())),
                   unless(forFunction(isMain())))
           .bind("StdStreamObject"),
       this);
 
-  Finder->addMatcher(declRefExpr(hasDeclaration(functionDecl(hasAnyName(
-                                     "printf", "vprintf", "puts", "putchar",
-                                     "scanf", "getchar", "gets"))),
-                                 unless(forFunction(isMain())))
-                         .bind("CLibFunction"),
-                     this);
+  Finder->addMatcher(
+      declRefExpr(hasDeclaration(functionDecl(hasAnyName(SmallVector<StringRef>(
+                      CLikeIOFunctions.begin(), CLikeIOFunctions.end())))),
+                  unless(forFunction(isMain())))
+          .bind("CLibFunction"),
+      this);
 
   /// Matcher for indirect stdio uses:
   /// \code
