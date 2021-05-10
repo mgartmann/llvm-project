@@ -98,10 +98,10 @@ New checks
 - New :doc:`misc-avoid-std-io-outside-main
   <clang-tidy/checks/misc-avoid-std-io-outside-main>` check.
 
-  Flags if a predefined standard stream object (``cin``, ``wcin``, ``cout``,
-  ``wcout``, ``cerr`` or ``wcerr``) is used outside the ``main`` function.
-  It also flags uses of uses of ``cstdio``/``stdio.h`` functions like
-  ``printf()`` outside the ``main`` function.
+  Diagnoses if a predefined standard stream object (``cin``, ``wcin``,
+  ``cout``, ``wcout``, ``cerr`` or ``wcerr``) is used outside the ``main`` function.
+  It also flags uses of uses of ``cstdio``/``stdio.h`` functions like ``printf()``
+  outside the ``main`` function.
 
 New check aliases
 ^^^^^^^^^^^^^^^^^
