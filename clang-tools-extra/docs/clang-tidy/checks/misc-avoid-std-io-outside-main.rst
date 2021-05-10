@@ -4,11 +4,12 @@ misc-avoid-std-io-outside-main
 =============
 
 Diagnoses if a predefined standard stream object (``cin``, ``wcin``,
-``cout``, ``wcout``, ``cerr`` or ``wcerr``) or a ``cstdio``/``stdio.h`` function is used
-outside the ``main`` function.
+``cout``, ``wcout``, ``cerr`` or ``wcerr``) or a ``cstdio``/``stdio.h``
+function is used outside the ``main`` function.
 
-For instance, in the following code, the use of ``std::cout`` and ``printf()`` outside of
-``main()`` would get flagged whereas the use of them inside ``main()`` is not flagged:
+For instance, in the following code, the use of ``std::cout`` and ``printf()``
+outside of ``main()`` would get flagged whereas the use of them inside
+``main()`` is not flagged:
 
 .. code-block:: c++
 
@@ -27,9 +28,10 @@ For instance, in the following code, the use of ``std::cout`` and ``printf()`` o
     std::printf("This does not trigger the check.");
   }
 
-Since the predefined standard stream objects are global objects, their use outside of ``main()`` worsens a
-program's testability and is thus discouraged. Instead, those objects should only be used inside ``main()``.
-They can then be passed as arguments to other functions like so:
+Since the predefined standard stream objects are global objects, their use
+outside of ``main()`` worsens a program's testability and is thus discouraged.
+Instead, those objects should only be used inside ``main()``. They can then be
+passed as arguments to other functions like so:
 
 .. code-block:: c++
 
@@ -46,5 +48,6 @@ They can then be passed as arguments to other functions like so:
     some_function(std::cin, std::cout);
   }
 
-In contrast to using ``std::cin`` and ``std::cout`` directly, in the above example, it is possible to inject
-mocked stream objects into ``some_function()`` during testing.
+In contrast to using ``std::cin`` and ``std::cout`` directly, in the above
+example, it is possible to inject mocked stream objects into
+``some_function()`` during testing.
