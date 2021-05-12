@@ -3,9 +3,10 @@
 misc-avoid-std-io-outside-main
 =============
 
-Diagnoses if a predefined standard stream object (``cin``, ``wcin``,
-``cout``, ``wcout``, ``cerr`` or ``wcerr``) or a ``cstdio``/``stdio.h``
-function is used outside the ``main`` function.
+Finds predefined standard stream objects like ``cin``, ``wcin``, ``cout``,
+``wcout``, ``cerr`` or ``wcerr``, that are used outside the ``main``
+function. It also finds uses of ``cstdio`` and ``stdio.h`` functions like
+``printf()`` outside the ``main`` function.
 
 For instance, in the following code, the use of ``std::cout`` and ``printf()``
 outside of ``main()`` would get flagged whereas the use of them inside
