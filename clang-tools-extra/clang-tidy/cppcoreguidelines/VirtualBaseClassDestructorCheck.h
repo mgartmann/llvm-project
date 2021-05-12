@@ -27,8 +27,8 @@ class VirtualBaseClassDestructorCheck : public ClangTidyCheck {
                                          const SourceManager &SM,
                                          const LangOptions &LangOpts) const;
   FixItHint
-  generateUserDeclaredConstructor(const CXXRecordDecl &StructOrClass,
-                                  const SourceManager &SourceManager) const;
+  generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
+                                 const SourceManager &SourceManager) const;
   AccessSpecDecl *getPublicASDecl(const CXXRecordDecl &StructOrClass) const;
   std::string indent(int Indentation) const;
 

@@ -60,8 +60,8 @@ void VirtualBaseClassDestructorCheck::check(
           *Destructor, *Result.SourceManager, Result.Context->getLangOpts()));
     }
   } else {
-    Fix = generateUserDeclaredConstructor(*MatchedClassOrStruct,
-                                          *Result.SourceManager);
+    Fix = generateUserDeclaredDestructor(*MatchedClassOrStruct,
+                                         *Result.SourceManager);
   }
 
   diag(MatchedClassOrStruct->getLocation(),
@@ -90,15 +90,17 @@ CharSourceRange VirtualBaseClassDestructorCheck::getVirtualKeywordRange(
   return Range;
 }
 
-FixItHint VirtualBaseClassDestructorCheck::generateUserDeclaredConstructor(
+FixItHint VirtualBaseClassDestructorCheck::generateUserDeclaredDestructor(
     const CXXRecordDecl &StructOrClass,
     const SourceManager &SourceManager) const {
   auto DestructorString = std::string("");
   SourceLocation Loc;
   bool AppendLineBreak = false;
+  const unsigned ColumnOffset = 1;
 
   auto ParentIndentation =
-      SourceManager.getExpansionColumnNumber(StructOrClass.getBeginLoc()) - 1;
+      SourceManager.getExpansionColumnNumber(StructOrClass.getBeginLoc()) -
+      ColumnOffset;
 
   auto AccessSpecDecl = getPublicASDecl(StructOrClass);
 
