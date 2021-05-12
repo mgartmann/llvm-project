@@ -39,9 +39,9 @@ void AvoidStdIoOutsideMainCheck::registerMatchers(MatchFinder *Finder) {
   /// \endcode
   Finder->addMatcher(
       declRefExpr(
-          hasDeclaration(varDecl(hasDescendant(declRefExpr(hasDeclaration(
-              functionDecl(hasAnyName("printf", "vprintf", "puts", "putchar",
-                                      "scanf", "getchar", "gets"))))))),
+          hasDeclaration(varDecl(hasDescendant(declRefExpr(
+              hasDeclaration(functionDecl(hasAnyName(SmallVector<StringRef>(
+                  CLikeIOFunctions.begin(), CLikeIOFunctions.end())))))))),
           unless(forFunction(isMain())))
           .bind("CLibFunction"),
       this);
