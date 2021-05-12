@@ -35,6 +35,15 @@ static void handleNoResultOp(PatternRewriter &rewriter,
                                     op.operand());
 }
 
+static bool getFirstI32Result(Operation *op, Value &value) {
+  if (!Type(op->getResult(0).getType()).isSignlessInteger(32))
+    return false;
+  value = op->getResult(0);
+  return true;
+}
+
+static Value bindNativeCodeCallResult(Value value) { return value; }
+
 // Test that natives calls are only called once during rewrites.
 // OpM_Test will return Pi, increased by 1 for each subsequent calls.
 // This let us check the number of times OpM_Test was called by inspecting
@@ -128,11 +137,13 @@ static void reifyReturnShape(Operation *op) {
   // Use permutations of 2 args as operands.
   auto shapedOp = cast<OpWithShapedTypeInferTypeInterfaceOp>(op);
   SmallVector<Value, 2> shapes;
-  if (failed(shapedOp.reifyReturnTypeShapes(b, shapes)))
+  if (failed(shapedOp.reifyReturnTypeShapes(b, shapes)) ||
+      !llvm::hasSingleElement(shapes))
     return;
-  for (auto it : llvm::enumerate(shapes))
+  for (auto it : llvm::enumerate(shapes)) {
     op->emitRemark() << "value " << it.index() << ": "
                      << it.value().getDefiningOp();
+  }
 }
 
 struct TestReturnTypeDriver
@@ -489,6 +500,21 @@ struct TestNestedOpCreationUndoRewrite
     return success();
   };
 };
+
+// This pattern matches `test.blackhole` and delete this op and its producer.
+struct TestReplaceEraseOp : public OpRewritePattern<BlackHoleOp> {
+  using OpRewritePattern<BlackHoleOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(BlackHoleOp op,
+                                PatternRewriter &rewriter) const final {
+    Operation *producer = op.getOperand().getDefiningOp();
+    // Always erase the user before the producer, the framework should handle
+    // this correctly.
+    rewriter.eraseOp(op);
+    rewriter.eraseOp(producer);
+    return success();
+  };
+};
 } // namespace
 
 namespace {
@@ -566,14 +592,15 @@ struct TestLegalizePatternDriver
              TestChangeProducerTypeI32ToF32, TestChangeProducerTypeF32ToF64,
              TestChangeProducerTypeF32ToInvalid, TestUpdateConsumerType,
              TestNonRootReplacement, TestBoundedRecursiveRewrite,
-             TestNestedOpCreationUndoRewrite>(&getContext());
+             TestNestedOpCreationUndoRewrite, TestReplaceEraseOp>(
+            &getContext());
     patterns.add<TestDropOpSignatureConversion>(&getContext(), converter);
     mlir::populateFuncOpTypeConversionPattern(patterns, converter);
     mlir::populateCallOpTypeConversionPattern(patterns, converter);
 
     // Define the conversion target used for the test.
     ConversionTarget target(getContext());
-    target.addLegalOp<ModuleOp, ModuleTerminatorOp>();
+    target.addLegalOp<ModuleOp>();
     target.addLegalOp<LegalOpA, LegalOpB, TestCastOp, TestValidOp,
                       TerminatorOp>();
     target
@@ -702,7 +729,7 @@ struct TestRemappedValue
     patterns.add<OneVResOneVOperandOp1Converter>(&getContext());
 
     mlir::ConversionTarget target(getContext());
-    target.addLegalOp<ModuleOp, ModuleTerminatorOp, FuncOp, TestReturnOp>();
+    target.addLegalOp<ModuleOp, FuncOp, TestReturnOp>();
     // We make OneVResOneVOperandOp1 legal only when it has more that one
     // operand. This will trigger the conversion that will replace one-operand
     // OneVResOneVOperandOp1 with two-operand OneVResOneVOperandOp1.
@@ -969,9 +996,8 @@ struct TestMergeBlocksPatternDriver
     patterns.add<TestMergeBlock, TestUndoBlocksMerge, TestMergeSingleBlockOps>(
         context);
     ConversionTarget target(*context);
-    target.addLegalOp<FuncOp, ModuleOp, ModuleTerminatorOp, TerminatorOp,
-                      TestBranchOp, TestTypeConsumerOp, TestTypeProducerOp,
-                      TestReturnOp>();
+    target.addLegalOp<FuncOp, ModuleOp, TerminatorOp, TestBranchOp,
+                      TestTypeConsumerOp, TestTypeProducerOp, TestReturnOp>();
     target.addIllegalOp<ILLegalOpF>();
 
     /// Expect the op to have a single block after legalization.

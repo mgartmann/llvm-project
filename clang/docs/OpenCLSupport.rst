@@ -321,7 +321,7 @@ C++ for OpenCL Implementation Status
 
 Clang implements language version 1.0 published in `the official
 release of C++ for OpenCL Documentation
-<https://github.com/KhronosGroup/OpenCL-Docs/releases/tag/cxxforopencl-v1.0-r1>`_.
+<https://github.com/KhronosGroup/OpenCL-Docs/releases/tag/cxxforopencl-v1.0-r2>`_.
 
 Limited support of experimental C++ libraries is described in the :ref:`experimental features <opencl_experimenal>`.
 
@@ -334,16 +334,8 @@ to view the full bug list.
 Missing features or with limited support
 ----------------------------------------
 
-- Use of ObjC blocks is disabled and therefore the ``enqueue_kernel`` builtin
-  function is not supported currently. It is expected that if support for this
-  feature is added in the future, it will utilize C++ lambdas instead of ObjC
-  blocks.
-
 - IR generation for global destructors is incomplete (See:
   `PR48047 <https://llvm.org/PR48047>`_).
-
-- There is no distinct file extension for sources that are to be compiled
-  in C++ for OpenCL mode (See: `PR48097 <https://llvm.org/PR48097>`_)
 
 .. _opencl_300:
 
@@ -360,7 +352,7 @@ implementation status.
 +------------------------------+--------------------------------------------------------------+----------------------+---------------------------------------------------------------------------+
 | Predefined macros            | New version macro                                            | :good:`done`         | https://reviews.llvm.org/D88300                                           |
 +------------------------------+--------------------------------------------------------------+----------------------+---------------------------------------------------------------------------+
-| Predefined macros            | Feature macros                                               | :part:`worked on`    | https://reviews.llvm.org/D89869                                           |
+| Predefined macros            | Feature macros                                               | :good:`done`         | https://reviews.llvm.org/D95776                                           |
 +------------------------------+--------------------------------------------------------------+----------------------+---------------------------------------------------------------------------+
 | Feature optionality          | Generic address space                                        | :none:`unclaimed`    |                                                                           |
 +------------------------------+--------------------------------------------------------------+----------------------+---------------------------------------------------------------------------+
@@ -380,7 +372,7 @@ implementation status.
 +------------------------------+--------------------------------------------------------------+----------------------+---------------------------------------------------------------------------+
 | Feature optionality          | Work group collective functions                              | :part:`worked on`    | https://reviews.llvm.org/D92004                                           |
 +------------------------------+--------------------------------------------------------------+----------------------+---------------------------------------------------------------------------+
-| New functionality            | RGBA vector components                                       | :none:`unclaimed`    |                                                                           |
+| New functionality            | RGBA vector components                                       | :good:`done`         | https://reviews.llvm.org/D99969                                           |
 +------------------------------+--------------------------------------------------------------+----------------------+---------------------------------------------------------------------------+
 | New functionality            | Subgroup functions                                           | :part:`worked on`    | https://reviews.llvm.org/D92004                                           |
 +------------------------------+--------------------------------------------------------------+----------------------+---------------------------------------------------------------------------+
@@ -397,6 +389,8 @@ and provide early feedback or contribute with further improvements.
 Feel free to contact us on `cfe-dev
 <https://lists.llvm.org/mailman/listinfo/cfe-dev>`_ or via `Bugzilla
 <https://bugs.llvm.org/>`__.
+
+.. _opencl_experimental_cxxlibs:
 
 C++ libraries for OpenCL
 ------------------------
@@ -438,7 +432,8 @@ The possible clang invocation to compile the example is as follows:
 
    .. code-block:: console
 
-     $ clang -cl-std=clc++  -I<path to libcxx checkout or installation>/include test.cl
+     $ clang -I<path to libcxx checkout or installation>/include test.clcpp
 
 Note that `type_traits` is a header only library and therefore no extra
-linking step against the standard libraries is required.
+linking step against the standard libraries is required. See full example
+in `Compiler Explorer <https://godbolt.org/z/5WbnTfb65>`_.

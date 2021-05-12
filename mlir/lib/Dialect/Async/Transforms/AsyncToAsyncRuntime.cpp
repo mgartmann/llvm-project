@@ -21,6 +21,7 @@
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/Transforms/RegionUtils.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/Support/Debug.h"
 
 using namespace mlir;
 using namespace mlir::async;
@@ -182,8 +183,8 @@ outlineExecuteOp(SymbolTable &symbolTable, ExecuteOp execute) {
   Location loc = execute.getLoc();
 
   // Collect all outlined function inputs.
-  llvm::SetVector<mlir::Value> functionInputs(execute.dependencies().begin(),
-                                              execute.dependencies().end());
+  SetVector<mlir::Value> functionInputs(execute.dependencies().begin(),
+                                        execute.dependencies().end());
   functionInputs.insert(execute.operands().begin(), execute.operands().end());
   getUsedValuesDefinedAbove(execute.body(), functionInputs);
 
@@ -199,7 +200,7 @@ outlineExecuteOp(SymbolTable &symbolTable, ExecuteOp execute) {
   // TODO: Derive outlined function name from the parent FuncOp (support
   // multiple nested async.execute operations).
   FuncOp func = FuncOp::create(loc, kAsyncFnPrefix, funcType, funcAttrs);
-  symbolTable.insert(func, Block::iterator(module.getBody()->getTerminator()));
+  symbolTable.insert(func);
 
   SymbolTable::setSymbolVisibility(func, SymbolTable::Visibility::Private);
 

@@ -17,7 +17,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Analysis/Utils/Local.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
@@ -186,15 +185,10 @@ bool FlattenCFG(BasicBlock *BB, AAResults *AA = nullptr);
 /// If this basic block is ONLY a setcc and a branch, and if a predecessor
 /// branches to us and one of our successors, fold the setcc into the
 /// predecessor and use logical operations to pick the right destination.
-/// If PoisonSafe is true, use select i1 rather than and/or i1 to successfully
-/// block unexpected propagation of poison when merging the branches. This is
-/// set to false by default when used by LoopSimplify for performance, but this
-/// should be turned on by default.
 bool FoldBranchToCommonDest(BranchInst *BI, llvm::DomTreeUpdater *DTU = nullptr,
                             MemorySSAUpdater *MSSAU = nullptr,
                             const TargetTransformInfo *TTI = nullptr,
-                            unsigned BonusInstThreshold = 1,
-                            bool PoisonSafe = false);
+                            unsigned BonusInstThreshold = 1);
 
 /// This function takes a virtual register computed by an Instruction and
 /// replaces it with a slot in the stack frame, allocated via alloca.
@@ -268,21 +262,6 @@ bool LowerDbgDeclare(Function &F);
 /// Propagate dbg.value intrinsics through the newly inserted PHIs.
 void insertDebugValuesForPHIs(BasicBlock *BB,
                               SmallVectorImpl<PHINode *> &InsertedPHIs);
-
-/// Finds all intrinsics declaring local variables as living in the memory that
-/// 'V' points to. This may include a mix of dbg.declare and
-/// dbg.addr intrinsics.
-TinyPtrVector<DbgVariableIntrinsic *> FindDbgAddrUses(Value *V);
-
-/// Like \c FindDbgAddrUses, but only returns dbg.declare intrinsics, not
-/// dbg.addr.
-TinyPtrVector<DbgDeclareInst *> FindDbgDeclareUses(Value *V);
-
-/// Finds the llvm.dbg.value intrinsics describing a value.
-void findDbgValues(SmallVectorImpl<DbgValueInst *> &DbgValues, Value *V);
-
-/// Finds the debug info intrinsics describing a value.
-void findDbgUsers(SmallVectorImpl<DbgVariableIntrinsic *> &DbgInsts, Value *V);
 
 /// Replaces llvm.dbg.declare instruction when the address it
 /// describes is replaced with a new value. If Deref is true, an
@@ -492,6 +471,15 @@ bool canReplaceOperandWithVariable(const Instruction *I, unsigned OpIdx);
 
 /// Invert the given true/false value, possibly reusing an existing copy.
 Value *invertCondition(Value *Condition);
+
+
+//===----------------------------------------------------------------------===//
+//  Assorted
+//
+
+/// If we can infer one attribute from another on the declaration of a
+/// function, explicitly materialize the maximal set in the IR.
+bool inferAttributesFromOthers(Function &F);
 
 } // end namespace llvm
 

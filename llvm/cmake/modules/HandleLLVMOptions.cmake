@@ -62,18 +62,19 @@ if( LLVM_ENABLE_ASSERTIONS )
     # NOTE: use `add_compile_options` rather than `add_definitions` since
     # `add_definitions` does not support generator expressions.
     add_compile_options($<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:-UNDEBUG>)
-
-    # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
-    foreach (flags_var_to_scrub
-        CMAKE_CXX_FLAGS_RELEASE
-        CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        CMAKE_CXX_FLAGS_MINSIZEREL
-        CMAKE_C_FLAGS_RELEASE
-        CMAKE_C_FLAGS_RELWITHDEBINFO
-        CMAKE_C_FLAGS_MINSIZEREL)
-      string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
-        "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
-    endforeach()
+    if (MSVC)
+      # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
+      foreach (flags_var_to_scrub
+          CMAKE_CXX_FLAGS_RELEASE
+          CMAKE_CXX_FLAGS_RELWITHDEBINFO
+          CMAKE_CXX_FLAGS_MINSIZEREL
+          CMAKE_C_FLAGS_RELEASE
+          CMAKE_C_FLAGS_RELWITHDEBINFO
+          CMAKE_C_FLAGS_MINSIZEREL)
+        string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
+          "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
+      endforeach()
+     endif()
   endif()
 endif()
 
@@ -758,6 +759,9 @@ if (LLVM_ENABLE_WARNINGS AND (LLVM_COMPILER_IS_GCC_COMPATIBLE OR CLANG_CL))
 
   # Enable -Wstring-conversion to catch misuse of string literals.
   add_flag_if_supported("-Wstring-conversion" STRING_CONVERSION_FLAG)
+
+  # Prevent bugs that can happen with llvm's brace style.
+  add_flag_if_supported("-Wmisleading-indentation" MISLEADING_INDENTATION_FLAG)
 endif (LLVM_ENABLE_WARNINGS AND (LLVM_COMPILER_IS_GCC_COMPATIBLE OR CLANG_CL))
 
 if (LLVM_COMPILER_IS_GCC_COMPATIBLE AND NOT LLVM_ENABLE_WARNINGS)
@@ -887,8 +891,8 @@ endif()
 
 # lld doesn't print colored diagnostics when invoked from Ninja
 if (UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
-  include(CheckLinkerFlag)
-  check_linker_flag("-Wl,--color-diagnostics" LINKER_SUPPORTS_COLOR_DIAGNOSTICS)
+  include(LLVMCheckLinkerFlag)
+  llvm_check_linker_flag(CXX "-Wl,--color-diagnostics" LINKER_SUPPORTS_COLOR_DIAGNOSTICS)
   append_if(LINKER_SUPPORTS_COLOR_DIAGNOSTICS "-Wl,--color-diagnostics"
     CMAKE_EXE_LINKER_FLAGS CMAKE_MODULE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS)
 endif()
@@ -897,7 +901,7 @@ endif()
 # FIXME: With MSVS, consider compiling with /Gy and linking with /OPT:REF?
 # But MinSizeRel seems to add that automatically, so maybe disable these
 # flags instead if LLVM_NO_DEAD_STRIP is set.
-if(NOT CYGWIN AND NOT WIN32)
+if(NOT CYGWIN AND NOT MSVC)
   if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND
      NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     check_c_compiler_flag("-Werror -fno-function-sections" C_SUPPORTS_FNO_FUNCTION_SECTIONS)

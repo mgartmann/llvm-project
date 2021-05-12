@@ -1524,6 +1524,13 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     break;
   case DeclSpec::TST_float:   Result = Context.FloatTy; break;
   case DeclSpec::TST_double:
+    if (S.getLangOpts().OpenCL) {
+      if (!S.getOpenCLOptions().isSupported("cl_khr_fp64", S.getLangOpts()))
+        S.Diag(DS.getTypeSpecTypeLoc(), diag::err_opencl_requires_extension)
+          << 0 << Context.DoubleTy << "cl_khr_fp64";
+      else if (!S.getOpenCLOptions().isAvailableOption("cl_khr_fp64", S.getLangOpts()))
+        S.Diag(DS.getTypeSpecTypeLoc(), diag::ext_opencl_double_without_pragma);
+    }
     if (DS.getTypeSpecWidth() == TypeSpecifierWidth::Long)
       Result = Context.LongDoubleTy;
     else
@@ -1712,6 +1719,13 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
   // a null type.
   if (Result->containsErrors())
     declarator.setInvalidType();
+
+  if (S.getLangOpts().OpenCL && Result->isOCLImage3dWOType() &&
+      !S.getOpenCLOptions().isSupported("cl_khr_3d_image_writes", S.getLangOpts())) {
+        S.Diag(DS.getTypeSpecTypeLoc(), diag::err_opencl_requires_extension)
+        << 0 << Result << "cl_khr_3d_image_writes";
+        declarator.setInvalidType();
+  }
 
   if (S.getLangOpts().OpenCL &&
       S.checkOpenCLDisabledTypeDeclSpec(DS, Result))
@@ -6378,6 +6392,7 @@ static bool BuildAddressSpaceIndex(Sema &S, LangAS &ASIdx,
     llvm::APSInt max(addrSpace.getBitWidth());
     max =
         Qualifiers::MaxAddressSpace - (unsigned)LangAS::FirstTargetAddressSpace;
+
     if (addrSpace > max) {
       S.Diag(AttrLoc, diag::err_attribute_address_space_too_high)
           << (unsigned)max.getZExtValue() << AddrSpace->getSourceRange();
@@ -6493,7 +6508,9 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
       Attr.setInvalid();
   } else {
     // The keyword-based type attributes imply which address space to use.
-    ASIdx = Attr.asOpenCLLangAS();
+    ASIdx = S.getLangOpts().SYCLIsDevice ? Attr.asSYCLLangAS()
+                                         : Attr.asOpenCLLangAS();
+
     if (ASIdx == LangAS::Default)
       llvm_unreachable("Invalid address space");
 
@@ -8830,6 +8847,29 @@ QualType Sema::BuildTypeofExprType(Expr *E, SourceLocation Loc) {
   return Context.getTypeOfExprType(E);
 }
 
+/// getDecltypeForParenthesizedExpr - Given an expr, will return the type for
+/// that expression, as in [dcl.type.simple]p4 but without taking id-expressions
+/// and class member access into account.
+QualType Sema::getDecltypeForParenthesizedExpr(Expr *E) {
+  // C++11 [dcl.type.simple]p4:
+  //   [...]
+  QualType T = E->getType();
+  switch (E->getValueKind()) {
+  //     - otherwise, if e is an xvalue, decltype(e) is T&&, where T is the
+  //       type of e;
+  case VK_XValue:
+    return Context.getRValueReferenceType(T);
+  //     - otherwise, if e is an lvalue, decltype(e) is T&, where T is the
+  //       type of e;
+  case VK_LValue:
+    return Context.getLValueReferenceType(T);
+  //  - otherwise, decltype(e) is the type of e.
+  case VK_RValue:
+    return T;
+  }
+  llvm_unreachable("Unknown value kind");
+}
+
 /// getDecltypeForExpr - Given an expr, will return the decltype for
 /// that expression, according to the rules in C++11
 /// [dcl.type.simple]p4 and C++11 [expr.lambda.prim]p18.
@@ -8894,22 +8934,7 @@ static QualType getDecltypeForExpr(Sema &S, Expr *E) {
     }
   }
 
-
-  // C++11 [dcl.type.simple]p4:
-  //   [...]
-  QualType T = E->getType();
-  switch (E->getValueKind()) {
-  //     - otherwise, if e is an xvalue, decltype(e) is T&&, where T is the
-  //       type of e;
-  case VK_XValue: T = S.Context.getRValueReferenceType(T); break;
-  //     - otherwise, if e is an lvalue, decltype(e) is T&, where T is the
-  //       type of e;
-  case VK_LValue: T = S.Context.getLValueReferenceType(T); break;
-  //  - otherwise, decltype(e) is the type of e.
-  case VK_RValue: break;
-  }
-
-  return T;
+  return S.getDecltypeForParenthesizedExpr(E);
 }
 
 QualType Sema::BuildDecltypeType(Expr *E, SourceLocation Loc,

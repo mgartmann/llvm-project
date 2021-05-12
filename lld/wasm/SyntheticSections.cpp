@@ -131,7 +131,7 @@ void ImportSection::writeBody() {
     import.Field = "memory";
     import.Kind = WASM_EXTERNAL_MEMORY;
     import.Memory.Flags = 0;
-    import.Memory.Initial = out.memorySec->numMemoryPages;
+    import.Memory.Minimum = out.memorySec->numMemoryPages;
     if (out.memorySec->maxMemoryPages != 0 || config->sharedMemory) {
       import.Memory.Flags |= WASM_LIMITS_FLAG_HAS_MAX;
       import.Memory.Maximum = out.memorySec->maxMemoryPages;
@@ -536,7 +536,7 @@ void LinkingSection::writeBody() {
     for (const OutputSegment *s : dataSegments) {
       writeStr(sub.os, s->name, "segment name");
       writeUleb128(sub.os, s->alignment, "alignment");
-      writeUleb128(sub.os, 0, "flags");
+      writeUleb128(sub.os, s->linkingFlags, "flags");
     }
     sub.writeTo(os);
   }

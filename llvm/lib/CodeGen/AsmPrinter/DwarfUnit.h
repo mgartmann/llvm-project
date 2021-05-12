@@ -76,6 +76,13 @@ protected:
 
   bool isShareableAcrossCUs(const DINode *D) const;
 
+  template <typename T>
+  void addAttribute(DIEValueList &Die, dwarf::Attribute Attribute,
+                    dwarf::Form Form, T &&Value) {
+    Die.addValue(DIEValueAllocator,
+                 DIEValue(Attribute, Form, std::forward<T>(Value)));
+  }
+
 public:
   // Accessors.
   AsmPrinter* getAsmPrinter() const { return Asm; }
@@ -147,10 +154,8 @@ public:
   void addString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
 
   /// Add a Dwarf label attribute data and value.
-  DIEValueList::value_iterator addLabel(DIEValueList &Die,
-                                        dwarf::Attribute Attribute,
-                                        dwarf::Form Form,
-                                        const MCSymbol *Label);
+  void addLabel(DIEValueList &Die, dwarf::Attribute Attribute, dwarf::Form Form,
+                const MCSymbol *Label);
 
   void addLabel(DIELoc &Die, dwarf::Form Form, const MCSymbol *Label);
 
@@ -272,13 +277,12 @@ public:
   void constructTypeDIE(DIE &Buffer, const DICompositeType *CTy);
 
   /// addSectionDelta - Add a label delta attribute data and value.
-  DIE::value_iterator addSectionDelta(DIE &Die, dwarf::Attribute Attribute,
-                                      const MCSymbol *Hi, const MCSymbol *Lo);
+  void addSectionDelta(DIE &Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
+                       const MCSymbol *Lo);
 
   /// Add a Dwarf section label attribute data and value.
-  DIE::value_iterator addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
-                                      const MCSymbol *Label,
-                                      const MCSymbol *Sec);
+  void addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
+                       const MCSymbol *Label, const MCSymbol *Sec);
 
   /// Get context owner's DIE.
   DIE *createTypeDIE(const DICompositeType *Ty);
