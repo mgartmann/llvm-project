@@ -84,9 +84,16 @@ struct TestLinalgTransforms
   Option<bool> testTileAndPadPattern{
       *this, "test-tile-and-pad-pattern",
       llvm::cl::desc("Test tile and pad pattern"), llvm::cl::init(false)};
-  Option<bool> testHoistPadding2Levels{*this, "test-hoist-padding-2-level",
-                                       llvm::cl::desc("Test hoist padding"),
-                                       llvm::cl::init(false)};
+  Option<int> testHoistPadding{*this, "test-hoist-padding",
+                               llvm::cl::desc("Test hoist padding"),
+                               llvm::cl::init(0)};
+  ListOption<int64_t> tileSizesForPadding{
+      *this, "tile-sizes-for-padding",
+      llvm::cl::desc("Linalg tile sizes when tile+pad"), llvm::cl::ZeroOrMore,
+      llvm::cl::MiscFlags::CommaSeparated};
+  ListOption<unsigned> testInterchangePattern{
+      *this, "test-interchange-pattern", llvm::cl::MiscFlags::CommaSeparated,
+      llvm::cl::desc("Test the interchange pattern.")};
 };
 } // end anonymous namespace
 
@@ -187,14 +194,9 @@ static void applyPatterns(FuncOp funcOp) {
                .addOpFilter<MatmulOp, FillOp, CopyOp, GenericOp>());
 
   //===--------------------------------------------------------------------===//
-  // Linalg generic permutation patterns.
+  // Linalg generic interchange pattern.
   //===--------------------------------------------------------------------===//
-  patterns.add<LinalgInterchangePattern<GenericOp>>(
-      ctx,
-      /*interchangeVector=*/ArrayRef<unsigned>{1, 2, 0},
-      LinalgTransformationFilter(ArrayRef<Identifier>{},
-                                 Identifier::get("PERMUTED", ctx)));
-  patterns.add<LinalgInterchangePattern<IndexedGenericOp>>(
+  patterns.add<GenericOpInterchangePattern>(
       ctx,
       /*interchangeVector=*/ArrayRef<unsigned>{1, 2, 0},
       LinalgTransformationFilter(ArrayRef<Identifier>{},
@@ -269,6 +271,7 @@ static void fillL1TilingAndMatmulToVectorPatterns(
 // Allocation call back
 static Optional<Value> allocCallBackFn(OpBuilder &b, memref::SubViewOp subView,
                                        ArrayRef<Value> boundingSubViewSize,
+                                       DataLayout &layout,
                                        OperationFolder *folder) {
   SmallVector<int64_t, 4> shape(boundingSubViewSize.size(), -1);
   return b
@@ -325,12 +328,15 @@ static void fillPromotionCallBackPatterns(MLIRContext *ctx,
 template <typename IdOp, typename NProcsOp>
 static SmallVector<ProcInfo, 2>
 getGpuProcIds(OpBuilder &b, Location loc, ArrayRef<Range> parallelLoopRanges) {
+  size_t count = std::min<size_t>(3, parallelLoopRanges.size());
+  SmallVector<ProcInfo, 2> procInfo(count);
+  const char *xyz[] = {"x", "y", "z"};
   Type indexType = b.getIndexType();
-  SmallVector<ProcInfo, 2> procInfo(2);
-  procInfo[0] = {b.create<IdOp>(loc, indexType, b.getStringAttr("y")),
-                 b.create<NProcsOp>(loc, indexType, b.getStringAttr("y"))};
-  procInfo[1] = {b.create<IdOp>(loc, indexType, b.getStringAttr("x")),
-                 b.create<NProcsOp>(loc, indexType, b.getStringAttr("x"))};
+  for (unsigned i = 0; i < count; ++i) {
+    procInfo[count - 1 - i] = {
+        b.create<IdOp>(loc, indexType, b.getStringAttr(xyz[i])),
+        b.create<NProcsOp>(loc, indexType, b.getStringAttr(xyz[i]))};
+  }
   return procInfo;
 }
 
@@ -522,18 +528,29 @@ static Value getNeutralOfLinalgOp(OpBuilder &b, OpOperand &op) {
   return b.create<ConstantOp>(op.getOwner()->getLoc(), t, b.getZeroAttr(t));
 }
 
-static void applyTileAndPadPattern(FuncOp funcOp) {
+static void applyTileAndPadPattern(FuncOp funcOp, ArrayRef<int64_t> tileSizes) {
   MLIRContext *context = funcOp.getContext();
   RewritePatternSet tilingPattern(context);
   auto linalgTilingOptions =
       linalg::LinalgTilingOptions()
-          .setTileSizes({2, 3, 4})
+          .setTileSizes(tileSizes)
           .setPaddingValueComputationFunction(getNeutralOfLinalgOp);
   tilingPattern.add<linalg::LinalgTilingPattern<linalg::MatmulI8I8I32Op>>(
       context, linalgTilingOptions,
       linalg::LinalgTransformationFilter(
           Identifier::get("tile-and-pad", context)));
   (void)applyPatternsAndFoldGreedily(funcOp, std::move(tilingPattern));
+}
+
+static void applyInterchangePattern(FuncOp funcOp,
+                                    ArrayRef<unsigned> interchangeVector) {
+  MLIRContext *context = funcOp.getContext();
+  RewritePatternSet interchangePattern(context);
+  interchangePattern.add<GenericOpInterchangePattern>(
+      context, interchangeVector,
+      LinalgTransformationFilter(ArrayRef<Identifier>{},
+                                 Identifier::get("interchange", context)));
+  (void)applyPatternsAndFoldGreedily(funcOp, std::move(interchangePattern));
 }
 
 /// Apply transformations specified as patterns.
@@ -570,12 +587,14 @@ void TestLinalgTransforms::runOnFunction() {
   if (testAffineMinSCFCanonicalizationPatterns)
     return applyAffineMinSCFCanonicalizationPatterns(getFunction());
   if (testTileAndPadPattern)
-    return applyTileAndPadPattern(getFunction());
-  if (testHoistPadding2Levels) {
-    getFunction().walk([](linalg::PadTensorOp padTensorOp) {
-      (void)linalg::hoistPaddingOnTensors(padTensorOp, 2);
+    return applyTileAndPadPattern(getFunction(), tileSizesForPadding);
+  if (testHoistPadding) {
+    getFunction().walk([&](linalg::PadTensorOp padTensorOp) {
+      (void)linalg::hoistPaddingOnTensors(padTensorOp, testHoistPadding);
     });
   }
+  if (testInterchangePattern.hasValue())
+    return applyInterchangePattern(getFunction(), testInterchangePattern);
 }
 
 namespace mlir {

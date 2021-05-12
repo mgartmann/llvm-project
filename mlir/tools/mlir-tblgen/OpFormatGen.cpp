@@ -12,8 +12,8 @@
 #include "mlir/TableGen/GenInfo.h"
 #include "mlir/TableGen/Interfaces.h"
 #include "mlir/TableGen/OpClass.h"
-#include "mlir/TableGen/OpTrait.h"
 #include "mlir/TableGen/Operator.h"
+#include "mlir/TableGen/Trait.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SetVector.h"
@@ -445,10 +445,12 @@ struct OperationFormat {
     operandTypes.resize(op.getNumOperands(), TypeResolution());
     resultTypes.resize(op.getNumResults(), TypeResolution());
 
-    hasImplicitTermTrait =
-        llvm::any_of(op.getTraits(), [](const OpTrait &trait) {
-          return trait.getDef().isSubClassOf("SingleBlockImplicitTerminator");
-        });
+    hasImplicitTermTrait = llvm::any_of(op.getTraits(), [](const Trait &trait) {
+      return trait.getDef().isSubClassOf("SingleBlockImplicitTerminator");
+    });
+
+    hasSingleBlockTrait =
+        hasImplicitTermTrait || op.getTrait("::mlir::OpTrait::SingleBlock");
   }
 
   /// Generate the operation parser from this format.
@@ -483,6 +485,9 @@ struct OperationFormat {
   /// A flag indicating if this operation has the SingleBlockImplicitTerminator
   /// trait.
   bool hasImplicitTermTrait;
+
+  /// A flag indicating if this operation has the SingleBlock trait.
+  bool hasSingleBlockTrait;
 
   /// A map of buildable types to indices.
   llvm::MapVector<StringRef, int, llvm::StringMap<int>> buildableTypes;
@@ -679,6 +684,14 @@ const char *regionListEnsureTerminatorParserCode = R"(
     ensureTerminator(*region, parser.getBuilder(), result.location);
 )";
 
+/// The code snippet used to ensure a list of regions have a block.
+///
+/// {0}: The name of the region list.
+const char *regionListEnsureSingleBlockParserCode = R"(
+  for (auto &region : {0}Regions)
+    if (region->empty()) region->emplaceBlock();
+)";
+
 /// The code snippet used to generate a parser call for an optional region.
 ///
 /// {0}: The name of the region.
@@ -703,6 +716,13 @@ const char *regionParserCode = R"(
 /// {0}: The name of the region.
 const char *regionEnsureTerminatorParserCode = R"(
   ensureTerminator(*{0}Region, parser.getBuilder(), result.location);
+)";
+
+/// The code snippet used to ensure a region has a block.
+///
+/// {0}: The name of the region.
+const char *regionEnsureSingleBlockParserCode = R"(
+  if ({0}Region->empty()) {0}Region->emplaceBlock();
 )";
 
 /// The code snippet used to generate a parser call for a successor list.
@@ -1134,6 +1154,9 @@ void OperationFormat::genElementParser(Element *element, OpMethodBody &body,
         body << "  if (!" << region->name << "Region->empty()) {\n  ";
         if (hasImplicitTermTrait)
           body << llvm::formatv(regionEnsureTerminatorParserCode, region->name);
+        else if (hasSingleBlockTrait)
+          body << llvm::formatv(regionEnsureSingleBlockParserCode,
+                                region->name);
       }
     }
 
@@ -1217,11 +1240,14 @@ void OperationFormat::genElementParser(Element *element, OpMethodBody &body,
     bool isVariadic = region->getVar()->isVariadic();
     body << llvm::formatv(isVariadic ? regionListParserCode : regionParserCode,
                           region->getVar()->name);
-    if (hasImplicitTermTrait) {
+    if (hasImplicitTermTrait)
       body << llvm::formatv(isVariadic ? regionListEnsureTerminatorParserCode
                                        : regionEnsureTerminatorParserCode,
                             region->getVar()->name);
-    }
+    else if (hasSingleBlockTrait)
+      body << llvm::formatv(isVariadic ? regionListEnsureSingleBlockParserCode
+                                       : regionEnsureSingleBlockParserCode,
+                            region->getVar()->name);
 
   } else if (auto *successor = dyn_cast<SuccessorVariable>(element)) {
     bool isVariadic = successor->getVar()->isVariadic();
@@ -1246,6 +1272,8 @@ void OperationFormat::genElementParser(Element *element, OpMethodBody &body,
     body << llvm::formatv(regionListParserCode, "full");
     if (hasImplicitTermTrait)
       body << llvm::formatv(regionListEnsureTerminatorParserCode, "full");
+    else if (hasSingleBlockTrait)
+      body << llvm::formatv(regionListEnsureSingleBlockParserCode, "full");
 
   } else if (isa<SuccessorsDirective>(element)) {
     body << llvm::formatv(successorListParserCode, "full");
@@ -2382,7 +2410,7 @@ LogicalResult FormatParser::parse() {
 
   // Check for any type traits that we can use for inferring types.
   llvm::StringMap<TypeResolutionInstance> variableTyResolver;
-  for (const OpTrait &trait : op.getTraits()) {
+  for (const Trait &trait : op.getTraits()) {
     const llvm::Record &def = trait.getDef();
     if (def.isSubClassOf("AllTypesMatch")) {
       handleAllTypesMatchConstraint(def.getValueAsListOfStrings("values"),

@@ -571,9 +571,9 @@ unsigned Module::getCodeViewFlag() const {
   return cast<ConstantInt>(Val->getValue())->getZExtValue();
 }
 
-unsigned Module::getInstructionCount() {
+unsigned Module::getInstructionCount() const {
   unsigned NumInstrs = 0;
-  for (Function &F : FunctionList)
+  for (const Function &F : FunctionList)
     NumInstrs += F.getInstructionCount();
   return NumInstrs;
 }
@@ -667,6 +667,23 @@ bool Module::getRtLibUseGOT() const {
 
 void Module::setRtLibUseGOT() {
   addModuleFlag(ModFlagBehavior::Max, "RtLibUseGOT", 1);
+}
+
+bool Module::getUwtable() const {
+  auto *Val = cast_or_null<ConstantAsMetadata>(getModuleFlag("uwtable"));
+  return Val && (cast<ConstantInt>(Val->getValue())->getZExtValue() > 0);
+}
+
+void Module::setUwtable() { addModuleFlag(ModFlagBehavior::Max, "uwtable", 1); }
+
+FramePointerKind Module::getFramePointer() const {
+  auto *Val = cast_or_null<ConstantAsMetadata>(getModuleFlag("frame-pointer"));
+  return static_cast<FramePointerKind>(
+      Val ? cast<ConstantInt>(Val->getValue())->getZExtValue() : 0);
+}
+
+void Module::setFramePointer(FramePointerKind Kind) {
+  addModuleFlag(ModFlagBehavior::Max, "frame-pointer", static_cast<int>(Kind));
 }
 
 void Module::setSDKVersion(const VersionTuple &V) {

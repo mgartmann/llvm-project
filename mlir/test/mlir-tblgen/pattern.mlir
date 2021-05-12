@@ -5,8 +5,8 @@ func @verifyFusedLocs(%arg0 : i32) -> i32 {
   %0 = "test.op_a"(%arg0) {attr = 10 : i32} : (i32) -> i32 loc("a")
   %result = "test.op_a"(%0) {attr = 20 : i32} : (i32) -> i32 loc("b")
 
-  // CHECK: %0 = "test.op_b"(%arg0) {attr = 10 : i32} : (i32) -> i32 loc("a")
-  // CHECK: %1 = "test.op_b"(%0) {attr = 20 : i32} : (i32) -> i32 loc("b")
+  // CHECK: "test.op_b"(%arg0) {attr = 10 : i32} : (i32) -> i32 loc("a")
+  // CHECK: "test.op_b"(%arg0) {attr = 20 : i32} : (i32) -> i32 loc(fused["b", "a"])
   return %result : i32
 }
 
@@ -67,7 +67,7 @@ func @verifyBenefit(%arg0 : i32) -> i32 {
   %2 = "test.op_g"(%1) : (i32) -> i32
 
   // CHECK: "test.op_f"(%arg0)
-  // CHECK: "test.op_b"(%arg0) {attr = 20 : i32}
+  // CHECK: "test.op_b"(%arg0) {attr = 34 : i32}
   return %0 : i32
 }
 
@@ -86,6 +86,20 @@ func @verifyAuxiliaryNativeCodeCall(%arg0: i32) -> (i32) {
   // CHECK: test.op_k
   %0 = "test.native_code_call3"(%arg0) : (i32) -> (i32)
   return %0 : i32
+}
+
+// CHECK-LABEL: verifyNativeCodeCallBinding
+func @verifyNativeCodeCallBinding(%arg0 : i32) -> (i32) {
+  %0 = "test.op_k"() : () -> (i32)
+  // CHECK: %[[A:.*]], %[[B:.*]] = "test.native_code_call5"(%1, %1) : (i32, i32) -> (i32, i32)
+  %1, %2 = "test.native_code_call4"(%0) : (i32) -> (i32, i32)
+  %3 = "test.constant"() {value = 1 : i8} : () -> i8
+  // %3 is i8 so it'll fail at GetFirstI32Result match. The operation should
+  // keep the same form.
+  // CHECK: %{{.*}}, %{{.*}} = "test.native_code_call4"({{%.*}}) : (i8) -> (i32, i32)
+  %4, %5 = "test.native_code_call4"(%3) : (i8) -> (i32, i32)
+  // CHECK: return %[[A]]
+  return %1 : i32
 }
 
 // CHECK-LABEL: verifyAllAttrConstraintOf

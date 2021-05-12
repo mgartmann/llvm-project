@@ -19,11 +19,11 @@
 #include "clang/Basic/LangStandard.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Sanitizers.h"
+#include "clang/Basic/TargetCXXABI.h"
 #include "clang/Basic/Visibility.h"
 #include "llvm/ADT/FloatingPointMode.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/MC/MCTargetOptions.h"
 #include <string>
 #include <vector>
 
@@ -124,6 +124,7 @@ public:
     MSVC2017_5 = 1912,
     MSVC2017_7 = 1914,
     MSVC2019 = 1920,
+    MSVC2019_8 = 1928,
   };
 
   enum SYCLMajorVersion {
@@ -221,7 +222,7 @@ public:
   };
 
   /// Possible exception handling behavior.
-  using ExceptionHandlingKind = llvm::ExceptionHandling;
+  enum class ExceptionHandlingKind { None, SjLj, WinEH, DwarfCFI, Wasm };
 
   enum class LaxVectorConversionKind {
     /// Permit no implicit vector bitcasts.
@@ -337,6 +338,10 @@ public:
   /// like CUDA/HIP.
   std::string CUID;
 
+  /// C++ ABI to compile with, if specified by the frontend through -fc++-abi=.
+  /// This overrides the default ABI used by the target.
+  llvm::Optional<TargetCXXABI::Kind> CXXABI;
+
   /// Indicates whether the front-end is explicitly told that the
   /// input is a header file (i.e. -x c-header).
   bool IsHeaderFile = false;
@@ -409,19 +414,19 @@ public:
   }
 
   bool hasSjLjExceptions() const {
-    return getExceptionHandling() == llvm::ExceptionHandling::SjLj;
+    return getExceptionHandling() == ExceptionHandlingKind::SjLj;
   }
 
   bool hasSEHExceptions() const {
-    return getExceptionHandling() == llvm::ExceptionHandling::WinEH;
+    return getExceptionHandling() == ExceptionHandlingKind::WinEH;
   }
 
   bool hasDWARFExceptions() const {
-    return getExceptionHandling() == llvm::ExceptionHandling::DwarfCFI;
+    return getExceptionHandling() == ExceptionHandlingKind::DwarfCFI;
   }
 
   bool hasWasmExceptions() const {
-    return getExceptionHandling() == llvm::ExceptionHandling::Wasm;
+    return getExceptionHandling() == ExceptionHandlingKind::Wasm;
   }
 };
 

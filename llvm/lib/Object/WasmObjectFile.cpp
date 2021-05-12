@@ -39,8 +39,8 @@ using namespace object;
 
 void WasmSymbol::print(raw_ostream &Out) const {
   Out << "Name=" << Info.Name
-      << ", Kind=" << toString(wasm::WasmSymbolType(Info.Kind))
-      << ", Flags=" << Info.Flags;
+      << ", Kind=" << toString(wasm::WasmSymbolType(Info.Kind)) << ", Flags=0x"
+      << Twine::utohexstr(Info.Flags);
   if (!isTypeData()) {
     Out << ", ElemIndex=" << Info.ElementIndex;
   } else if (isDefined()) {
@@ -208,7 +208,7 @@ static Error readInitExpr(wasm::WasmInitExpr &Expr,
 static wasm::WasmLimits readLimits(WasmObjectFile::ReadContext &Ctx) {
   wasm::WasmLimits Result;
   Result.Flags = readVaruint32(Ctx);
-  Result.Initial = readVaruint64(Ctx);
+  Result.Minimum = readVaruint64(Ctx);
   if (Result.Flags & wasm::WASM_LIMITS_FLAG_HAS_MAX)
     Result.Maximum = readVaruint64(Ctx);
   return Result;
@@ -462,7 +462,7 @@ Error WasmObjectFile::parseLinkingSection(ReadContext &Ctx) {
       for (uint32_t I = 0; I < Count; I++) {
         DataSegments[I].Data.Name = readString(Ctx);
         DataSegments[I].Data.Alignment = readVaruint32(Ctx);
-        DataSegments[I].Data.LinkerFlags = readVaruint32(Ctx);
+        DataSegments[I].Data.LinkingFlags = readVaruint32(Ctx);
       }
       break;
     }
@@ -1134,13 +1134,13 @@ Error WasmObjectFile::parseMemorySection(ReadContext &Ctx) {
 
 Error WasmObjectFile::parseEventSection(ReadContext &Ctx) {
   EventSection = Sections.size();
-  uint32_t Count = readVarint32(Ctx);
+  uint32_t Count = readVaruint32(Ctx);
   Events.reserve(Count);
   while (Count--) {
     wasm::WasmEvent Event;
     Event.Index = NumImportedEvents + Events.size();
     Event.Type.Attribute = readVaruint32(Ctx);
-    Event.Type.SigIndex = readVarint32(Ctx);
+    Event.Type.SigIndex = readVaruint32(Ctx);
     Events.push_back(Event);
   }
 
@@ -1431,7 +1431,7 @@ Error WasmObjectFile::parseDataSection(ReadContext &Ctx) {
     // The rest of these Data fields are set later, when reading in the linking
     // metadata section.
     Segment.Data.Alignment = 0;
-    Segment.Data.LinkerFlags = 0;
+    Segment.Data.LinkingFlags = 0;
     Segment.Data.Comdat = UINT32_MAX;
     Segment.SectionOffset = Ctx.Ptr - Ctx.Start;
     Ctx.Ptr += Size;

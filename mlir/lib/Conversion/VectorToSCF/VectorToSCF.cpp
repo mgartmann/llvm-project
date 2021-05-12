@@ -116,11 +116,9 @@ public:
         VectorType::get(vectorType.getShape().take_back(minorRank),
                         vectorType.getElementType());
     /// Memref of minor vector type is used for individual transfers.
-    memRefMinorVectorType =
-        MemRefType::get(majorVectorType.getShape(), minorVectorType, {},
-                        xferOp.getShapedType()
-                            .template cast<MemRefType>()
-                            .getMemorySpaceAsInt());
+    memRefMinorVectorType = MemRefType::get(
+        majorVectorType.getShape(), minorVectorType, {},
+        xferOp.getShapedType().template cast<MemRefType>().getMemorySpace());
   }
 
   LogicalResult doReplace();
@@ -232,7 +230,10 @@ emitInBoundsCondition(PatternRewriter &rewriter,
     Value iv = std::get<0>(it), off = std::get<1>(it), ub = std::get<2>(it);
     using namespace mlir::edsc::op;
     majorIvsPlusOffsets.push_back(iv + off);
-    if (xferOp.isMaskedDim(leadingRank + idx)) {
+    auto affineConstExpr =
+        xferOp.permutation_map().getResult(idx).dyn_cast<AffineConstantExpr>();
+    bool isBroadcast = affineConstExpr && affineConstExpr.getValue() == 0;
+    if (!xferOp.isDimInBounds(leadingRank + idx) && !isBroadcast) {
       Value inBoundsCond = onTheFlyFoldSLT(majorIvsPlusOffsets.back(), ub);
       if (inBoundsCond)
         inBoundsCondition = (inBoundsCondition)
@@ -278,14 +279,14 @@ LogicalResult NDTransferOpHelper<TransferReadOp>::doReplace() {
       Value memref = xferOp.source();
       auto map =
           getTransferMinorIdentityMap(xferOp.getShapedType(), minorVectorType);
-      ArrayAttr masked;
-      if (!xferOp.isMaskedDim(xferOp.getVectorType().getRank() - 1)) {
+      ArrayAttr inBounds;
+      if (xferOp.isDimInBounds(xferOp.getVectorType().getRank() - 1)) {
         OpBuilder &b = ScopedContext::getBuilderRef();
-        masked = b.getBoolArrayAttr({false});
+        inBounds = b.getBoolArrayAttr({true});
       }
       return vector_transfer_read(minorVectorType, memref, indexing,
                                   AffineMapAttr::get(map), xferOp.padding(),
-                                  masked);
+                                  inBounds);
     };
 
     // 1. Compute the inBoundsCondition in the current loops ivs + offset
@@ -384,13 +385,13 @@ LogicalResult NDTransferOpHelper<TransferWriteOp>::doReplace() {
         result = memref_load(alloc, majorIvs);
       auto map =
           getTransferMinorIdentityMap(xferOp.getShapedType(), minorVectorType);
-      ArrayAttr masked;
-      if (!xferOp.isMaskedDim(xferOp.getVectorType().getRank() - 1)) {
+      ArrayAttr inBounds;
+      if (xferOp.isDimInBounds(xferOp.getVectorType().getRank() - 1)) {
         OpBuilder &b = ScopedContext::getBuilderRef();
-        masked = b.getBoolArrayAttr({false});
+        inBounds = b.getBoolArrayAttr({true});
       }
       vector_transfer_write(result, xferOp.source(), indexing,
-                            AffineMapAttr::get(map), masked);
+                            AffineMapAttr::get(map), inBounds);
     };
 
     // 1. Compute the inBoundsCondition in the current loops ivs + offset
@@ -540,6 +541,8 @@ LogicalResult VectorTransferRewriter<TransferReadOp>::matchAndRewrite(
   using namespace mlir::edsc::op;
 
   TransferReadOp transfer = cast<TransferReadOp>(op);
+  if (transfer.mask())
+    return failure();
   auto memRefType = transfer.getShapedType().dyn_cast<MemRefType>();
   if (!memRefType)
     return failure();
@@ -626,6 +629,8 @@ LogicalResult VectorTransferRewriter<TransferWriteOp>::matchAndRewrite(
   using namespace edsc::op;
 
   TransferWriteOp transfer = cast<TransferWriteOp>(op);
+  if (transfer.mask())
+    return failure();
   auto memRefType = transfer.getShapedType().template dyn_cast<MemRefType>();
   if (!memRefType)
     return failure();

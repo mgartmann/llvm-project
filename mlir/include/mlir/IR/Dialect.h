@@ -158,6 +158,19 @@ public:
         getRegisteredInterface(InterfaceT::getInterfaceID()));
   }
 
+  /// Lookup an op interface for the given ID if one is registered, otherwise
+  /// nullptr.
+  virtual void *getRegisteredInterfaceForOp(TypeID interfaceID,
+                                            OperationName opName) {
+    return nullptr;
+  }
+  template <typename InterfaceT>
+  typename InterfaceT::Concept *
+  getRegisteredInterfaceForOp(OperationName opName) {
+    return static_cast<typename InterfaceT::Concept *>(
+        getRegisteredInterfaceForOp(InterfaceT::getInterfaceID(), opName));
+  }
+
 protected:
   /// The constructor takes a unique namespace for this dialect as well as the
   /// context to bind to.
@@ -179,6 +192,11 @@ protected:
   template <typename... Args> void addTypes() {
     (void)std::initializer_list<int>{0, (addType<Args>(), 0)...};
   }
+
+  /// Register a type instance with this dialect.
+  /// The use of this method is in general discouraged in favor of
+  /// 'addTypes<CustomType>()'.
+  void addType(TypeID typeID, AbstractType &&typeInfo);
 
   /// Register a set of attribute classes with this dialect.
   template <typename... Args> void addAttributes() {
@@ -218,7 +236,6 @@ private:
     addType(T::getTypeID(), AbstractType::get<T>(*this));
     detail::TypeUniquer::registerType<T>(context);
   }
-  void addType(TypeID typeID, AbstractType &&typeInfo);
 
   /// The namespace of this dialect.
   StringRef name;

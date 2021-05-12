@@ -18,7 +18,9 @@
 #include "AMDGPUInstrInfo.h"
 #include "AMDGPUTargetMachine.h"
 #include "SIMachineFunctionInfo.h"
+#include "Utils/AMDGPUBaseInfo.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/BinaryFormat/ELF.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
@@ -817,6 +819,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     FPToI.minScalar(1, S32);
 
   FPToI.minScalar(0, S32)
+       .widenScalarToNextPow2(0, 32)
        .scalarize(0)
        .lower();
 
@@ -1289,12 +1292,14 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     Atomics.legalFor({{S32, FlatPtr}, {S64, FlatPtr}});
   }
 
+  auto &Atomic = getActionDefinitionsBuilder(G_ATOMICRMW_FADD);
   if (ST.hasLDSFPAtomics()) {
-    auto &Atomic = getActionDefinitionsBuilder(G_ATOMICRMW_FADD)
-      .legalFor({{S32, LocalPtr}, {S32, RegionPtr}});
+    Atomic.legalFor({{S32, LocalPtr}, {S32, RegionPtr}});
     if (ST.hasGFX90AInsts())
       Atomic.legalFor({{S64, LocalPtr}});
   }
+  if (ST.hasAtomicFaddInsts())
+    Atomic.legalFor({{S32, GlobalPtr}});
 
   // BUFFER/FLAT_ATOMIC_CMP_SWAP on GCN GPUs needs input marshalling, and output
   // demarshalling
@@ -2825,18 +2830,6 @@ void AMDGPULegalizerInfo::legalizeUDIV_UREM32Impl(MachineIRBuilder &B,
     B.buildSelect(DstReg, Cond, B.buildAdd(S32, Q, One), Q);
   else
     B.buildSelect(DstReg, Cond, B.buildSub(S32, R, Y), R);
-}
-
-bool AMDGPULegalizerInfo::legalizeUDIV_UREM32(MachineInstr &MI,
-                                              MachineRegisterInfo &MRI,
-                                              MachineIRBuilder &B) const {
-  const bool IsDiv = MI.getOpcode() == AMDGPU::G_UDIV;
-  Register DstReg = MI.getOperand(0).getReg();
-  Register Num = MI.getOperand(1).getReg();
-  Register Den = MI.getOperand(2).getReg();
-  legalizeUDIV_UREM32Impl(B, DstReg, Num, Den, IsDiv);
-  MI.eraseFromParent();
-  return true;
 }
 
 // Build integer reciprocal sequence arounud V_RCP_IFLAG_F32
@@ -4537,27 +4530,55 @@ bool AMDGPULegalizerInfo::legalizeSBufferLoad(
 bool AMDGPULegalizerInfo::legalizeTrapIntrinsic(MachineInstr &MI,
                                                 MachineRegisterInfo &MRI,
                                                 MachineIRBuilder &B) const {
-  // Is non-HSA path or trap-handler disabled? then, insert s_endpgm instruction
-  if (ST.getTrapHandlerAbi() != GCNSubtarget::TrapHandlerAbiHsa ||
-      !ST.isTrapHandlerEnabled()) {
-    B.buildInstr(AMDGPU::S_ENDPGM).addImm(0);
-  } else {
-    // Pass queue pointer to trap handler as input, and insert trap instruction
-    // Reference: https://llvm.org/docs/AMDGPUUsage.html#trap-handler-abi
-    MachineRegisterInfo &MRI = *B.getMRI();
+  if (!ST.isTrapHandlerEnabled() ||
+      ST.getTrapHandlerAbi() != GCNSubtarget::TrapHandlerAbi::AMDHSA)
+    return legalizeTrapEndpgm(MI, MRI, B);
 
-    Register LiveIn =
-      MRI.createGenericVirtualRegister(LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64));
-    if (!loadInputValue(LiveIn, B, AMDGPUFunctionArgInfo::QUEUE_PTR))
-      return false;
-
-    Register SGPR01(AMDGPU::SGPR0_SGPR1);
-    B.buildCopy(SGPR01, LiveIn);
-    B.buildInstr(AMDGPU::S_TRAP)
-        .addImm(GCNSubtarget::TrapIDLLVMTrap)
-        .addReg(SGPR01, RegState::Implicit);
+  if (Optional<uint8_t> HsaAbiVer = AMDGPU::getHsaAbiVersion(&ST)) {
+    switch (*HsaAbiVer) {
+    case ELF::ELFABIVERSION_AMDGPU_HSA_V2:
+    case ELF::ELFABIVERSION_AMDGPU_HSA_V3:
+      return legalizeTrapHsaQueuePtr(MI, MRI, B);
+    case ELF::ELFABIVERSION_AMDGPU_HSA_V4:
+      return ST.supportsGetDoorbellID() ?
+          legalizeTrapHsa(MI, MRI, B) :
+          legalizeTrapHsaQueuePtr(MI, MRI, B);
+    }
   }
 
+  llvm_unreachable("Unknown trap handler");
+}
+
+bool AMDGPULegalizerInfo::legalizeTrapEndpgm(
+    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B) const {
+  B.buildInstr(AMDGPU::S_ENDPGM).addImm(0);
+  MI.eraseFromParent();
+  return true;
+}
+
+bool AMDGPULegalizerInfo::legalizeTrapHsaQueuePtr(
+    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B) const {
+  // Pass queue pointer to trap handler as input, and insert trap instruction
+  // Reference: https://llvm.org/docs/AMDGPUUsage.html#trap-handler-abi
+  Register LiveIn =
+    MRI.createGenericVirtualRegister(LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64));
+  if (!loadInputValue(LiveIn, B, AMDGPUFunctionArgInfo::QUEUE_PTR))
+    return false;
+
+  Register SGPR01(AMDGPU::SGPR0_SGPR1);
+  B.buildCopy(SGPR01, LiveIn);
+  B.buildInstr(AMDGPU::S_TRAP)
+      .addImm(static_cast<unsigned>(GCNSubtarget::TrapID::LLVMAMDHSATrap))
+      .addReg(SGPR01, RegState::Implicit);
+
+  MI.eraseFromParent();
+  return true;
+}
+
+bool AMDGPULegalizerInfo::legalizeTrapHsa(
+    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B) const {
+  B.buildInstr(AMDGPU::S_TRAP)
+      .addImm(static_cast<unsigned>(GCNSubtarget::TrapID::LLVMAMDHSATrap));
   MI.eraseFromParent();
   return true;
 }
@@ -4566,8 +4587,8 @@ bool AMDGPULegalizerInfo::legalizeDebugTrapIntrinsic(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B) const {
   // Is non-HSA path or trap-handler disabled? then, report a warning
   // accordingly
-  if (ST.getTrapHandlerAbi() != GCNSubtarget::TrapHandlerAbiHsa ||
-      !ST.isTrapHandlerEnabled()) {
+  if (!ST.isTrapHandlerEnabled() ||
+      ST.getTrapHandlerAbi() != GCNSubtarget::TrapHandlerAbi::AMDHSA) {
     DiagnosticInfoUnsupported NoTrap(B.getMF().getFunction(),
                                      "debugtrap handler not supported",
                                      MI.getDebugLoc(), DS_Warning);
@@ -4575,7 +4596,8 @@ bool AMDGPULegalizerInfo::legalizeDebugTrapIntrinsic(
     Ctx.diagnose(NoTrap);
   } else {
     // Insert debug-trap instruction
-    B.buildInstr(AMDGPU::S_TRAP).addImm(GCNSubtarget::TrapIDLLVMDebugTrap);
+    B.buildInstr(AMDGPU::S_TRAP)
+        .addImm(static_cast<unsigned>(GCNSubtarget::TrapID::LLVMAMDHSADebugTrap));
   }
 
   MI.eraseFromParent();
