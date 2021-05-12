@@ -29,4 +29,4 @@ Using a while loop instead of a do-while could improve readability and prevents 
     }
   }
 
-This check implements the rule `ES.75 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es75-avoid-do-statements>`_ of the C++ Core Guidelines.
+This check implements rule `ES.75 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es75-avoid-do-statements>`_ of the C++ Core Guidelines.
