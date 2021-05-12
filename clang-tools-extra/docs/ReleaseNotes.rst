@@ -83,25 +83,11 @@ New checks
   Finds ``pthread_setcanceltype`` function calls where a thread's cancellation
   type is set to asynchronous.
 
-- New :doc:`altera-unroll-loops
-  <clang-tidy/checks/altera-unroll-loops>` check.
-
-  Finds inner loops that have not been unrolled, as well as fully unrolled
-  loops with unknown loops bounds or a large number of iterations.
-
 - New :doc:`cppcoreguidelines-prefer-member-initializer
   <clang-tidy/checks/cppcoreguidelines-prefer-member-initializer>` check.
 
   Finds member initializations in the constructor body which can be placed into
   the initialization list instead.
-
-- New :doc:`misc-avoid-std-io-outside-main
-  <clang-tidy/checks/misc-avoid-std-io-outside-main>` check.
-
-  Diagnoses if a predefined standard stream object (``cin``, ``wcin``,
-  ``cout``, ``wcout``, ``cerr`` or ``wcerr``) is used outside the ``main`` function.
-  It also flags uses of uses of ``cstdio``/``stdio.h`` functions like ``printf()``
-  outside the ``main`` function.
 
 New check aliases
 ^^^^^^^^^^^^^^^^^
