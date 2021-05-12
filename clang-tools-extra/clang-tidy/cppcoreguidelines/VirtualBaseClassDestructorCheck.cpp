@@ -35,7 +35,7 @@ void VirtualBaseClassDestructorCheck::check(
   const auto *MatchedClassOrStruct =
       Result.Nodes.getNodeAs<CXXRecordDecl>("ProblematicClassOrStruct");
 
-  const auto Destructor = MatchedClassOrStruct->getDestructor();
+  const CXXDestructorDecl *Destructor = MatchedClassOrStruct->getDestructor();
 
   if (Destructor->getAccess() == AS_private) {
     diag(MatchedClassOrStruct->getLocation(),
@@ -74,15 +74,16 @@ void VirtualBaseClassDestructorCheck::check(
 CharSourceRange VirtualBaseClassDestructorCheck::getVirtualKeywordRange(
     const CXXDestructorDecl &Destructor, const SourceManager &SM,
     const LangOptions &LangOpts) const {
-  auto VirtualBeginLoc = Destructor.getBeginLoc();
-  auto VirtualEndLoc = VirtualBeginLoc.getLocWithOffset(
+  SourceLocation VirtualBeginLoc = Destructor.getBeginLoc();
+  SourceLocation VirtualEndLoc = VirtualBeginLoc.getLocWithOffset(
       Lexer::MeasureTokenLength(VirtualBeginLoc, SM, LangOpts));
 
   /// Range ends with \c StartOfNextToken so that any whitespace after \c
   /// virtual is included.
-  auto StartOfNextToken = Lexer::findNextToken(VirtualEndLoc, SM, LangOpts)
-                              .getValue()
-                              .getLocation();
+  SourceLocation StartOfNextToken =
+      Lexer::findNextToken(VirtualEndLoc, SM, LangOpts)
+          .getValue()
+          .getLocation();
 
   CharSourceRange Range = CharSourceRange{};
   Range.setBegin(VirtualBeginLoc);
@@ -93,16 +94,16 @@ CharSourceRange VirtualBaseClassDestructorCheck::getVirtualKeywordRange(
 FixItHint VirtualBaseClassDestructorCheck::generateUserDeclaredDestructor(
     const CXXRecordDecl &StructOrClass,
     const SourceManager &SourceManager) const {
-  auto DestructorString = std::string("");
+  std::string DestructorString;
   SourceLocation Loc;
   bool AppendLineBreak = false;
   const unsigned ColumnOffset = 1;
 
-  auto ParentIndentation =
+  unsigned ParentIndentation =
       SourceManager.getExpansionColumnNumber(StructOrClass.getBeginLoc()) -
       ColumnOffset;
 
-  auto AccessSpecDecl = getPublicASDecl(StructOrClass);
+  AccessSpecDecl *AccessSpecDecl = getPublicASDecl(StructOrClass);
 
   if (!AccessSpecDecl) {
     if (StructOrClass.isClass()) {
