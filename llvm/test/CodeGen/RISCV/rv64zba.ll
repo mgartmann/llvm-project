@@ -126,6 +126,32 @@ define i64 @zextw_i64(i64 %a) nounwind {
   ret i64 %and
 }
 
+; This makes sure targetShrinkDemandedConstant changes the and immmediate to
+; allow zext.w or slli+srli.
+define i64 @zextw_demandedbits_i64(i64 %0) {
+; RV64I-LABEL: zextw_demandedbits_i64:
+; RV64I:       # %bb.0:
+; RV64I-NEXT:    ori a0, a0, 1
+; RV64I-NEXT:    slli a0, a0, 32
+; RV64I-NEXT:    srli a0, a0, 32
+; RV64I-NEXT:    ret
+;
+; RV64IB-LABEL: zextw_demandedbits_i64:
+; RV64IB:       # %bb.0:
+; RV64IB-NEXT:    ori a0, a0, 1
+; RV64IB-NEXT:    zext.w a0, a0
+; RV64IB-NEXT:    ret
+;
+; RV64IBA-LABEL: zextw_demandedbits_i64:
+; RV64IBA:       # %bb.0:
+; RV64IBA-NEXT:    ori a0, a0, 1
+; RV64IBA-NEXT:    zext.w a0, a0
+; RV64IBA-NEXT:    ret
+  %2 = and i64 %0, 4294967294
+  %3 = or i64 %2, 1
+  ret i64 %3
+}
+
 define signext i16 @sh1add(i64 %0, i16* %1) {
 ; RV64I-LABEL: sh1add:
 ; RV64I:       # %bb.0:

@@ -24,6 +24,8 @@ static cl::opt<TargetLibraryInfoImpl::VectorLibrary> ClVectorLibrary(
                           "No vector functions library"),
                clEnumValN(TargetLibraryInfoImpl::Accelerate, "Accelerate",
                           "Accelerate framework"),
+               clEnumValN(TargetLibraryInfoImpl::DarwinLibSystemM,
+                          "Darwin_libsystem_m", "Darwin libsystem_m"),
                clEnumValN(TargetLibraryInfoImpl::LIBMVEC_X86, "LIBMVEC-X86",
                           "GLIBC Vector Math library"),
                clEnumValN(TargetLibraryInfoImpl::MASSV, "MASSV",
@@ -63,6 +65,49 @@ static bool hasBcmp(const Triple &TT) {
   // Both NetBSD and OpenBSD are planning to remove the function. Windows does
   // not have it.
   return TT.isOSFreeBSD() || TT.isOSSolaris();
+}
+
+static bool isCallingConvCCompatible(CallingConv::ID CC, StringRef TT,
+                                     FunctionType *FuncTy) {
+  switch (CC) {
+  default:
+    return false;
+  case llvm::CallingConv::C:
+    return true;
+  case llvm::CallingConv::ARM_APCS:
+  case llvm::CallingConv::ARM_AAPCS:
+  case llvm::CallingConv::ARM_AAPCS_VFP: {
+
+    // The iOS ABI diverges from the standard in some cases, so for now don't
+    // try to simplify those calls.
+    if (Triple(TT).isiOS())
+      return false;
+
+    if (!FuncTy->getReturnType()->isPointerTy() &&
+        !FuncTy->getReturnType()->isIntegerTy() &&
+        !FuncTy->getReturnType()->isVoidTy())
+      return false;
+
+    for (auto *Param : FuncTy->params()) {
+      if (!Param->isPointerTy() && !Param->isIntegerTy())
+        return false;
+    }
+    return true;
+  }
+  }
+  return false;
+}
+
+bool TargetLibraryInfoImpl::isCallingConvCCompatible(CallBase *CI) {
+  return ::isCallingConvCCompatible(CI->getCallingConv(),
+                                    CI->getModule()->getTargetTriple(),
+                                    CI->getFunctionType());
+}
+
+bool TargetLibraryInfoImpl::isCallingConvCCompatible(Function *F) {
+  return ::isCallingConvCCompatible(F->getCallingConv(),
+                                    F->getParent()->getTargetTriple(),
+                                    F->getFunctionType());
 }
 
 /// Initialize the set of available library functions based on the specified
@@ -1574,6 +1619,14 @@ void TargetLibraryInfoImpl::addVectorizableFunctionsFromVecLib(
   case Accelerate: {
     const VecDesc VecFuncs[] = {
     #define TLI_DEFINE_ACCELERATE_VECFUNCS
+    #include "llvm/Analysis/VecFuncs.def"
+    };
+    addVectorizableFunctions(VecFuncs);
+    break;
+  }
+  case DarwinLibSystemM: {
+    const VecDesc VecFuncs[] = {
+    #define TLI_DEFINE_DARWIN_LIBSYSTEM_M_VECFUNCS
     #include "llvm/Analysis/VecFuncs.def"
     };
     addVectorizableFunctions(VecFuncs);

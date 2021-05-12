@@ -229,7 +229,19 @@ def FeatureNSAtoVMEMBug : SubtargetFeature<"nsa-to-vmem-bug",
 def FeatureFlatSegmentOffsetBug : SubtargetFeature<"flat-segment-offset-bug",
   "HasFlatSegmentOffsetBug",
   "true",
-  "GFX10 bug, inst_offset ignored in flat segment"
+  "GFX10 bug where inst_offset is ignored when flat instructions access global memory"
+>;
+
+def FeatureNegativeScratchOffsetBug : SubtargetFeature<"negative-scratch-offset-bug",
+  "NegativeScratchOffsetBug",
+  "true",
+  "Negative immediate offsets in scratch instructions with an SGPR offset page fault on GFX9"
+>;
+
+def FeatureNegativeUnalignedScratchOffsetBug : SubtargetFeature<"negative-unaligned-scratch-offset-bug",
+  "NegativeUnalignedScratchOffsetBug",
+  "true",
+  "Scratch instructions with a VGPR offset and a negative immediate offset that is not a multiple of 4 read wrong memory on GFX10"
 >;
 
 def FeatureOffset3fBug : SubtargetFeature<"offset-3f-bug",
@@ -771,7 +783,8 @@ def FeatureGFX9 : GCNSubtargetFeatureGeneration<"GFX9",
    FeatureAddNoCarryInsts, FeatureGFX8Insts, FeatureGFX7GFX8GFX9Insts,
    FeatureScalarFlatScratchInsts, FeatureScalarAtomics, FeatureR128A16,
    FeatureSMemTimeInst, FeatureFastDenormalF32, FeatureSupportsXNACK,
-   FeatureUnalignedBufferAccess, FeatureUnalignedDSAccess
+   FeatureUnalignedBufferAccess, FeatureUnalignedDSAccess,
+   FeatureNegativeScratchOffsetBug
   ]
 >;
 
@@ -988,7 +1001,8 @@ def FeatureGroup {
     FeatureLdsBranchVmemWARHazard,
     FeatureNSAtoVMEMBug,
     FeatureOffset3fBug,
-    FeatureFlatSegmentOffsetBug
+    FeatureFlatSegmentOffsetBug,
+    FeatureNegativeUnalignedScratchOffsetBug
    ];
 }
 
@@ -1320,6 +1334,10 @@ def Has64BitDPP : Predicate<"Subtarget->has64BitDPP()">,
 
 def HasPackedFP32Ops : Predicate<"Subtarget->hasPackedFP32Ops()">,
   AssemblerPredicate<(all_of FeaturePackedFP32Ops)>;
+
+def HasFmaakFmamkF32Insts :
+  Predicate<"Subtarget->hasFmaakFmamkF32Insts()">,
+  AssemblerPredicate<(any_of FeatureGFX10Insts)>;
 
 def HasExtendedImageInsts : Predicate<"Subtarget->hasExtendedImageInsts()">,
   AssemblerPredicate<(all_of FeatureExtendedImageInsts)>;

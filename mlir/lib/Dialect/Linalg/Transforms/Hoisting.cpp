@@ -412,7 +412,7 @@ void mlir::linalg::hoistRedundantVectorTransfers(FuncOp func) {
       LLVM_DEBUG(DBGS() << "Candidate read: " << *transferRead.getOperation()
                         << "\n");
 
-      llvm::SetVector<Operation *> forwardSlice;
+      SetVector<Operation *> forwardSlice;
       getForwardSlice(transferRead.getOperation(), &forwardSlice);
 
       // Look for the last TransferWriteOp in the forwardSlice of
@@ -510,7 +510,7 @@ void mlir::linalg::hoistRedundantVectorTransfers(FuncOp func) {
 template <typename... OpTypeList>
 static bool backwardsSliceOnlyHasOpsOfType(scf::ForOp outerLimit, Value v) {
   // Compute a backward slice up to, but not including, `outerLimit`.
-  llvm::SetVector<Operation *> backwardSlice;
+  SetVector<Operation *> backwardSlice;
   getBackwardSlice(v, &backwardSlice, [&](Operation *op) {
     return outerLimit->isProperAncestor(op);
   });
@@ -557,7 +557,7 @@ static Value computeLoopIndependentUpperBound(OpBuilder &b, scf::ForOp outer,
   (void)ok;
 
   // Compute a backward slice up to, but not including, `outer`.
-  llvm::SetVector<Operation *> backwardSlice;
+  SetVector<Operation *> backwardSlice;
   getBackwardSlice(v, &backwardSlice,
                    [&](Operation *op) { return outer->isProperAncestor(op); });
   backwardSlice.insert(v.getDefiningOp());
@@ -574,9 +574,15 @@ static Value computeLoopIndependentUpperBound(OpBuilder &b, scf::ForOp outer,
       continue;
     }
     auto sliceMinOp = cast<AffineMinOp>(op);
+    GetMinMaxExprFn getSCFMinMax = [&](Value value,
+                                       SmallVectorImpl<Value> &dims,
+                                       SmallVectorImpl<Value> &symbols) {
+      return getSCFMinMaxExpr(value, dims, symbols, [&](Operation *op) {
+        return outer->isAncestor(op);
+      });
+    };
     // Perform the substitution of the operands of AffineMinOp.
-    auto mapAndOperands = substituteMin(
-        sliceMinOp, [&](Operation *op) { return outer->isAncestor(op); });
+    auto mapAndOperands = substituteMin(sliceMinOp, getSCFMinMax);
     SmallVector<Value> resultOperands = mapAndOperands.dims;
     llvm::append_range(resultOperands, mapAndOperands.symbols);
     AffineMap map = mapAndOperands.map;
@@ -655,8 +661,8 @@ static Value buildLoopIterationCount(OpBuilder &b, scf::ForOp outer,
 ///   dimensions of reuse.
 static LogicalResult
 hoistPaddingOnTensorsPrerequisites(linalg::PadTensorOp padTensorOp, int nLevels,
-                                   llvm::SetVector<Operation *> &backwardSlice,
-                                   llvm::SetVector<Operation *> &packingLoops,
+                                   SetVector<Operation *> &backwardSlice,
+                                   SetVector<Operation *> &packingLoops,
                                    SmallVector<Value> &dynamicTensorSizes) {
   // Bail on any use that isn't an input of a Linalg op.
   // Hoisting of inplace updates happens after vectorization.
@@ -746,7 +752,7 @@ hoistPaddingOnTensorsPrerequisites(linalg::PadTensorOp padTensorOp, int nLevels,
 LogicalResult mlir::linalg::hoistPaddingOnTensors(PadTensorOp &padTensorOp,
                                                   unsigned nLoops) {
   SmallVector<Value> dynamicTensorSizes;
-  llvm::SetVector<Operation *> backwardSlice, packingLoops;
+  SetVector<Operation *> backwardSlice, packingLoops;
   if (failed(hoistPaddingOnTensorsPrerequisites(padTensorOp, nLoops,
                                                 backwardSlice, packingLoops,
                                                 dynamicTensorSizes)))
@@ -793,7 +799,15 @@ LogicalResult mlir::linalg::hoistPaddingOnTensors(PadTensorOp &padTensorOp,
   backwardSlice.insert(padTensorOp);
   // Stack step 1. iteratively clone loops and push `packedTensor`.
   for (Operation *op : backwardSlice) {
-    if (op->getNumRegions() == 0 || isa<linalg::PadTensorOp>(op)) {
+    // Specifically sit out in the subtenso(packedTensor) case: this is the
+    // piece we seek to replace.
+    if (auto subTensor = dyn_cast<SubTensorOp>(op))
+      if (bvm.lookupOrDefault(subTensor.source()) == packedTensor)
+        continue;
+    auto effects = dyn_cast<MemoryEffectOpInterface>(op);
+    bool hasNoEffects = !effects || effects.hasNoEffect();
+    if (hasNoEffects &&
+        (op->getNumRegions() == 0 || isa<linalg::PadTensorOp>(op))) {
       b.clone(*op, bvm);
       continue;
     }
@@ -808,8 +822,10 @@ LogicalResult mlir::linalg::hoistPaddingOnTensors(PadTensorOp &padTensorOp,
         b.create<scf::ForOp>(loc, bvm.lookupOrDefault(forOp.lowerBound()),
                              bvm.lookupOrDefault(forOp.upperBound()),
                              bvm.lookupOrDefault(forOp.step()), packedTensor);
-
+    // Map the induction var, region args and results to the `clonedForOp`.
     bvm.map(forOp.getInductionVar(), clonedForOp.getInductionVar());
+    bvm.map(forOp.getRegionIterArgs(), clonedForOp.getRegionIterArgs());
+    bvm.map(forOp.getResults(), clonedForOp.getResults());
     assert(clonedForOp->getNumRegions() == 1);
     clonedLoopIvs.push_back(clonedForOp.getInductionVar());
 

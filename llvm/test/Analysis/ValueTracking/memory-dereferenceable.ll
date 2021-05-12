@@ -25,8 +25,7 @@ declare i32* @foo()
 
 ; Loads from sret arguments
 ; CHECK-LABEL: 'test_sret'
-; GLOBAL: %sret_gep{{.*}}(aligned)
-; POINT-NOT: %sret_gep{{.*}}(aligned)
+; CHECK: %sret_gep{{.*}}(aligned)
 ; CHECK-NOT: %sret_gep_outside
 define void @test_sret(%struct.A* sret(%struct.A) %result) {
   %sret_gep = getelementptr inbounds %struct.A, %struct.A* %result, i64 0, i32 1, i64 2
@@ -210,22 +209,23 @@ define void @global_allocationsize() {
 
 ; Loads from byval arguments
 ; CHECK-LABEL: 'byval'
-; GLOBAL: %i8_byval{{.*}}(aligned)
-; POINT-NOT: %i8_byval{{.*}}(aligned)
-; CHECK-NOT: %byval_cast
-; GLOBAL: %byval_gep{{.*}}(aligned)
-; POINT-NOT: %byval_gep{{.*}}(aligned)
-; FIXME: Should hold in the point semantics case too
+; CHECK: %i8_byval{{.*}}(aligned)
+; CHECK-NOT: %bad_byval_cast
+; CHECK: %byval_gep{{.*}}(aligned)
+; CHECK: %good_byval_cast{{.*}}(unaligned)
 define void @byval(i8* byval(i8) %i8_byval,
-                        %struct.A* byval(%struct.A) %A_byval) {
+                   %struct.A* byval(%struct.A) %A_byval) {
   call void @mayfree()
-  %i8_byval_load = load i8, i8* %i8_byval
+  load i8, i8* %i8_byval
 
-  %byval_cast = bitcast i8* %i8_byval to i32*
-  %bad_byval_load = load i32, i32* %byval_cast
+  %bad_byval_cast = bitcast i8* %i8_byval to i32*
+  load i32, i32* %bad_byval_cast
 
   %byval_gep = getelementptr inbounds %struct.A, %struct.A* %A_byval, i64 0, i32 1, i64 2
   load i8, i8* %byval_gep
+  %good_byval_cast = bitcast %struct.A* %A_byval to i32*
+  load i32, i32* %good_byval_cast
+
   ret void
 }
 
@@ -245,16 +245,14 @@ define i32 @f_0(i32 %val) {
 ; CHECK-LABEL: 'negative'
 ; GLOBAL: %p
 ; POINT-NOT: %p
-define void @negative(i32* dereferenceable(8) %p) nofree nosync {
+define void @negative(i32* dereferenceable(8) %p) {
   call void @mayfree()
   %v = load i32, i32* %p
   ret void
 }
 
 ; CHECK-LABEL: 'infer_func_attrs1'
-; GLOBAL: %p
-; POINT-NOT: %p
-; FIXME: Can be inferred from attributes
+; CHECK: %p
 define void @infer_func_attrs1(i32* dereferenceable(8) %p) nofree nosync {
   call void @mayfree()
   %v = load i32, i32* %p

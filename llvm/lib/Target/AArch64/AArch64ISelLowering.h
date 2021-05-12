@@ -66,7 +66,6 @@ enum NodeType : unsigned {
   RET_FLAG, // Return with a flag operand. Operand 0 is the chain operand.
   BRCOND,   // Conditional branch instruction; "b.cond".
   CSEL,
-  FCSEL, // Conditional move instruction.
   CSINV, // Conditional select invert.
   CSNEG, // Conditional select negate.
   CSINC, // Conditional select increment.
@@ -89,6 +88,8 @@ enum NodeType : unsigned {
   FMUL_PRED,
   FSUB_PRED,
   MUL_PRED,
+  MULHS_PRED,
+  MULHU_PRED,
   SDIV_PRED,
   SHL_PRED,
   SMAX_PRED,
@@ -609,8 +610,8 @@ public:
   /// of the specified type.
   /// If the AM is supported, the return value must be >= 0.
   /// If the AM is not supported, it returns a negative value.
-  int getScalingFactorCost(const DataLayout &DL, const AddrMode &AM, Type *Ty,
-                           unsigned AS) const override;
+  InstructionCost getScalingFactorCost(const DataLayout &DL, const AddrMode &AM,
+                                       Type *Ty, unsigned AS) const override;
 
   /// Return true if an FMA operation is faster than a pair of fmul and fadd
   /// instructions. fmuladd intrinsics will be expanded to FMAs when this method
@@ -819,6 +820,8 @@ public:
     return 128;
   }
 
+  bool isAllActivePredicate(SDValue N) const;
+
 private:
   /// Keep a pointer to the AArch64Subtarget around so that we can
   /// make the right decision when generating code for different targets.
@@ -936,7 +939,6 @@ private:
   SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSPLAT_VECTOR(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSTEP_VECTOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerDUPQLane(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerToPredicatedOp(SDValue Op, SelectionDAG &DAG, unsigned NewOp,
                               bool OverrideNEON = false) const;
@@ -946,8 +948,7 @@ private:
   SDValue LowerDIV(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerMUL(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVectorSRA_SRL_SHL(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerShiftRightParts(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerShiftParts(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerCTTZ(SDValue Op, SelectionDAG &DAG) const;
@@ -962,6 +963,7 @@ private:
   SDValue LowerXOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerBITCAST(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVSCALE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVECREDUCE(SDValue Op, SelectionDAG &DAG) const;
@@ -988,6 +990,9 @@ private:
   SDValue LowerFixedLengthVectorStoreToSVE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFixedLengthVectorTruncateToSVE(SDValue Op,
                                               SelectionDAG &DAG) const;
+  SDValue LowerFixedLengthExtractVectorElt(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFixedLengthInsertVectorElt(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFixedLengthBitcastToSVE(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue BuildSDIVPow2(SDNode *N, const APInt &Divisor, SelectionDAG &DAG,
                         SmallVectorImpl<SDNode *> &Created) const override;
