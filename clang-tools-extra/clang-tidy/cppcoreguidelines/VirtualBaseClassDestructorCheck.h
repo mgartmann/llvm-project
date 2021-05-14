@@ -23,9 +23,7 @@ namespace cppcoreguidelines {
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-virtual-base-class-destructor.html
 class VirtualBaseClassDestructorCheck : public ClangTidyCheck {
   const unsigned IndentationWidth;
-  CharSourceRange getVirtualKeywordRange(const CXXDestructorDecl &Destructor,
-                                         const SourceManager &SM,
-                                         const LangOptions &LangOpts) const;
+
   FixItHint
   generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
                                  const SourceManager &SourceManager) const;

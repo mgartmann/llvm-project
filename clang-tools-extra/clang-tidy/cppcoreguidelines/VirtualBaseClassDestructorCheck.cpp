@@ -70,9 +70,9 @@ void VirtualBaseClassDestructorCheck::check(
       << MatchedClassOrStruct << ProtectedVirtual << Fix;
 }
 
-CharSourceRange VirtualBaseClassDestructorCheck::getVirtualKeywordRange(
+static CharSourceRange getVirtualKeywordRange(
     const CXXDestructorDecl &Destructor, const SourceManager &SM,
-    const LangOptions &LangOpts) const {
+    const LangOptions &LangOpts) {
   SourceLocation VirtualBeginLoc = Destructor.getBeginLoc();
   SourceLocation VirtualEndLoc = VirtualBeginLoc.getLocWithOffset(
       Lexer::MeasureTokenLength(VirtualBeginLoc, SM, LangOpts));
