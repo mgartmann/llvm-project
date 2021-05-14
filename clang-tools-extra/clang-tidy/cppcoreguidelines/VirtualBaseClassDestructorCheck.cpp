@@ -39,23 +39,22 @@ void VirtualBaseClassDestructorCheck::check(
 
   if (Destructor->getAccess() == AS_private) {
     diag(MatchedClassOrStruct->getLocation(),
-         "destructor of %0 %1 is private and prevents using the type. Consider "
+         "destructor of %0 is private and prevents using the type. Consider "
          "making it public and virtual or protected and non-virtual")
-        << (MatchedClassOrStruct->isClass() ? "class" : "struct")
         << MatchedClassOrStruct;
 
     return;
   }
 
   // Implicit destructors are public and non-virtual for classes and structs.
-  std::string TypeAndVirtuality = "public and non-virtual";
+  bool ProtectedVirtual = false;
   FixItHint Fix;
 
   if (MatchedClassOrStruct->hasUserDeclaredDestructor()) {
     if (Destructor->getAccess() == AccessSpecifier::AS_public) {
       Fix = FixItHint::CreateInsertion(Destructor->getLocation(), "virtual ");
     } else if (Destructor->getAccess() == AS_protected) {
-      TypeAndVirtuality = "protected and virtual";
+      ProtectedVirtual = true;
       Fix = FixItHint::CreateRemoval(getVirtualKeywordRange(
           *Destructor, *Result.SourceManager, Result.Context->getLangOpts()));
     }
@@ -65,10 +64,10 @@ void VirtualBaseClassDestructorCheck::check(
   }
 
   diag(MatchedClassOrStruct->getLocation(),
-       "destructor of %0 %1 is %2. It should either be public and virtual or "
-       "protected and non-virtual")
-      << (MatchedClassOrStruct->isClass() ? "class" : "struct")
-      << MatchedClassOrStruct << TypeAndVirtuality << Fix;
+       "destructor of %0 is %select{public and non-virtual|protected and "
+       "virtual}1. It should either be public and virtual or protected and "
+       "non-virtual")
+      << MatchedClassOrStruct << ProtectedVirtual << Fix;
 }
 
 CharSourceRange VirtualBaseClassDestructorCheck::getVirtualKeywordRange(
