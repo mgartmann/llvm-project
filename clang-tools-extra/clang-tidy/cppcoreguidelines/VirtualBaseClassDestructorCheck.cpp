@@ -29,47 +29,6 @@ void VirtualBaseClassDestructorCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-void VirtualBaseClassDestructorCheck::check(
-    const MatchFinder::MatchResult &Result) {
-
-  const auto *MatchedClassOrStruct =
-      Result.Nodes.getNodeAs<CXXRecordDecl>("ProblematicClassOrStruct");
-
-  const CXXDestructorDecl *Destructor = MatchedClassOrStruct->getDestructor();
-
-  if (Destructor->getAccess() == AS_private) {
-    diag(MatchedClassOrStruct->getLocation(),
-         "destructor of %0 is private and prevents using the type. Consider "
-         "making it public and virtual or protected and non-virtual")
-        << MatchedClassOrStruct;
-
-    return;
-  }
-
-  // Implicit destructors are public and non-virtual for classes and structs.
-  bool ProtectedVirtual = false;
-  FixItHint Fix;
-
-  if (MatchedClassOrStruct->hasUserDeclaredDestructor()) {
-    if (Destructor->getAccess() == AccessSpecifier::AS_public) {
-      Fix = FixItHint::CreateInsertion(Destructor->getLocation(), "virtual ");
-    } else if (Destructor->getAccess() == AS_protected) {
-      ProtectedVirtual = true;
-      Fix = FixItHint::CreateRemoval(getVirtualKeywordRange(
-          *Destructor, *Result.SourceManager, Result.Context->getLangOpts()));
-    }
-  } else {
-    Fix = generateUserDeclaredDestructor(*MatchedClassOrStruct,
-                                         *Result.SourceManager);
-  }
-
-  diag(MatchedClassOrStruct->getLocation(),
-       "destructor of %0 is %select{public and non-virtual|protected and "
-       "virtual}1. It should either be public and virtual or protected and "
-       "non-virtual")
-      << MatchedClassOrStruct << ProtectedVirtual << Fix;
-}
-
 static CharSourceRange
 getVirtualKeywordRange(const CXXDestructorDecl &Destructor,
                        const SourceManager &SM, const LangOptions &LangOpts) {
@@ -90,9 +49,9 @@ getVirtualKeywordRange(const CXXDestructorDecl &Destructor,
   return Range;
 }
 
-static FixItHint generateUserDeclaredDestructor(
-    const CXXRecordDecl &StructOrClass,
-    const SourceManager &SourceManager) {
+static FixItHint
+generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
+                               const SourceManager &SourceManager) {
   std::string DestructorString;
   SourceLocation Loc;
   bool AppendLineBreak = false;
@@ -132,6 +91,47 @@ getPublicASDecl(const CXXRecordDecl &StructOrClass) {
   }
 
   return nullptr;
+}
+
+void VirtualBaseClassDestructorCheck::check(
+    const MatchFinder::MatchResult &Result) {
+
+  const auto *MatchedClassOrStruct =
+      Result.Nodes.getNodeAs<CXXRecordDecl>("ProblematicClassOrStruct");
+
+  const CXXDestructorDecl *Destructor = MatchedClassOrStruct->getDestructor();
+
+  if (Destructor->getAccess() == AS_private) {
+    diag(MatchedClassOrStruct->getLocation(),
+         "destructor of %0 is private and prevents using the type. Consider "
+         "making it public and virtual or protected and non-virtual")
+        << MatchedClassOrStruct;
+
+    return;
+  }
+
+  // Implicit destructors are public and non-virtual for classes and structs.
+  bool ProtectedVirtual = false;
+  FixItHint Fix;
+
+  if (MatchedClassOrStruct->hasUserDeclaredDestructor()) {
+    if (Destructor->getAccess() == AccessSpecifier::AS_public) {
+      Fix = FixItHint::CreateInsertion(Destructor->getLocation(), "virtual ");
+    } else if (Destructor->getAccess() == AS_protected) {
+      ProtectedVirtual = true;
+      Fix = FixItHint::CreateRemoval(getVirtualKeywordRange(
+          *Destructor, *Result.SourceManager, Result.Context->getLangOpts()));
+    }
+  } else {
+    Fix = generateUserDeclaredDestructor(*MatchedClassOrStruct,
+                                         *Result.SourceManager);
+  }
+
+  diag(MatchedClassOrStruct->getLocation(),
+       "destructor of %0 is %select{public and non-virtual|protected and "
+       "virtual}1. It should either be public and virtual or protected and "
+       "non-virtual")
+      << MatchedClassOrStruct << ProtectedVirtual << Fix;
 }
 
 } // namespace cppcoreguidelines
