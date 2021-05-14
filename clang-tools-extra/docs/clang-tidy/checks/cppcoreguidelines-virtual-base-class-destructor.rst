@@ -50,14 +50,3 @@ This would be rewritten to look like this:
   public:
     virtual ~Bar(){};
   };
-
-Options
--------
-
-.. option:: IndentationWidth
-
-   An unsigned integer specifying how wide an indentation is in terms of blank
-   spaces. This option is used for classes/structs with implicit destructors,
-   where a used-declared destructor needs to be inserted.
-
-

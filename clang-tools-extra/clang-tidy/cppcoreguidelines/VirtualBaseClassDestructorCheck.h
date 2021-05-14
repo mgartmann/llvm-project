@@ -22,8 +22,6 @@ namespace cppcoreguidelines {
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-virtual-base-class-destructor.html
 class VirtualBaseClassDestructorCheck : public ClangTidyCheck {
-  const unsigned IndentationWidth;
-
   FixItHint
   generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
                                  const SourceManager &SourceManager) const;
@@ -32,12 +30,7 @@ class VirtualBaseClassDestructorCheck : public ClangTidyCheck {
 
 public:
   VirtualBaseClassDestructorCheck(StringRef Name, ClangTidyContext *Context)
-      : ClangTidyCheck(Name, Context),
-        IndentationWidth(Options.get("IndentationWidth", 4)) {}
-
-  void storeOptions(ClangTidyOptions::OptionMap &Opts) override {
-    Options.store(Opts, "IndentationWidth", IndentationWidth);
-  }
+      : ClangTidyCheck(Name, Context) {}
 
   bool isLanguageVersionSupported(const LangOptions &LangOpts) const override {
     return LangOpts.CPlusPlus;
