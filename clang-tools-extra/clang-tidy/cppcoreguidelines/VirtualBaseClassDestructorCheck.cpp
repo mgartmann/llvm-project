@@ -49,6 +49,20 @@ getVirtualKeywordRange(const CXXDestructorDecl &Destructor,
   return Range;
 }
 
+static const AccessSpecDecl *
+getPublicASDecl(const CXXRecordDecl &StructOrClass) {
+  for (DeclContext::specific_decl_iterator<AccessSpecDecl>
+           AS{StructOrClass.decls_begin()},
+       ASEnd{StructOrClass.decls_end()};
+       AS != ASEnd; ++AS) {
+    AccessSpecDecl *ASDecl = *AS;
+    if (ASDecl->getAccess() == AccessSpecifier::AS_public)
+      return ASDecl;
+  }
+
+  return nullptr;
+}
+
 static FixItHint
 generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
                                const SourceManager &SourceManager) {
@@ -77,20 +91,6 @@ generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
       .append(AppendLineBreak ? "\n" : "");
 
   return FixItHint::CreateInsertion(Loc, DestructorString);
-}
-
-static const AccessSpecDecl *
-getPublicASDecl(const CXXRecordDecl &StructOrClass) {
-  for (DeclContext::specific_decl_iterator<AccessSpecDecl>
-           AS{StructOrClass.decls_begin()},
-       ASEnd{StructOrClass.decls_end()};
-       AS != ASEnd; ++AS) {
-    AccessSpecDecl *ASDecl = *AS;
-    if (ASDecl->getAccess() == AccessSpecifier::AS_public)
-      return ASDecl;
-  }
-
-  return nullptr;
 }
 
 void VirtualBaseClassDestructorCheck::check(
