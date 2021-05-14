@@ -70,9 +70,9 @@ void VirtualBaseClassDestructorCheck::check(
       << MatchedClassOrStruct << ProtectedVirtual << Fix;
 }
 
-static CharSourceRange getVirtualKeywordRange(
-    const CXXDestructorDecl &Destructor, const SourceManager &SM,
-    const LangOptions &LangOpts) {
+static CharSourceRange
+getVirtualKeywordRange(const CXXDestructorDecl &Destructor,
+                       const SourceManager &SM, const LangOptions &LangOpts) {
   SourceLocation VirtualBeginLoc = Destructor.getBeginLoc();
   SourceLocation VirtualEndLoc = VirtualBeginLoc.getLocWithOffset(
       Lexer::MeasureTokenLength(VirtualBeginLoc, SM, LangOpts));
@@ -90,14 +90,14 @@ static CharSourceRange getVirtualKeywordRange(
   return Range;
 }
 
-FixItHint VirtualBaseClassDestructorCheck::generateUserDeclaredDestructor(
+static FixItHint generateUserDeclaredDestructor(
     const CXXRecordDecl &StructOrClass,
-    const SourceManager &SourceManager) const {
+    const SourceManager &SourceManager) {
   std::string DestructorString;
   SourceLocation Loc;
   bool AppendLineBreak = false;
 
-  AccessSpecDecl *AccessSpecDecl = getPublicASDecl(StructOrClass);
+  const AccessSpecDecl *AccessSpecDecl = getPublicASDecl(StructOrClass);
 
   if (!AccessSpecDecl) {
     if (StructOrClass.isClass()) {
@@ -120,8 +120,8 @@ FixItHint VirtualBaseClassDestructorCheck::generateUserDeclaredDestructor(
   return FixItHint::CreateInsertion(Loc, DestructorString);
 }
 
-AccessSpecDecl *VirtualBaseClassDestructorCheck::getPublicASDecl(
-    const CXXRecordDecl &StructOrClass) const {
+static const AccessSpecDecl *
+getPublicASDecl(const CXXRecordDecl &StructOrClass) {
   for (DeclContext::specific_decl_iterator<AccessSpecDecl>
            AS{StructOrClass.decls_begin()},
        ASEnd{StructOrClass.decls_end()};

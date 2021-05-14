@@ -22,12 +22,6 @@ namespace cppcoreguidelines {
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-virtual-base-class-destructor.html
 class VirtualBaseClassDestructorCheck : public ClangTidyCheck {
-  FixItHint
-  generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
-                                 const SourceManager &SourceManager) const;
-  AccessSpecDecl *getPublicASDecl(const CXXRecordDecl &StructOrClass) const;
-  std::string indent(int Indentation) const;
-
 public:
   VirtualBaseClassDestructorCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
