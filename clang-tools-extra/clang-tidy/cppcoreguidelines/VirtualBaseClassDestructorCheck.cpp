@@ -19,7 +19,7 @@ namespace tidy {
 namespace cppcoreguidelines {
 
 void VirtualBaseClassDestructorCheck::registerMatchers(MatchFinder *Finder) {
-  auto inheritsVirtualMethod =
+  ast_matchers::internal::Matcher<CXXRecordDecl> inheritsVirtualMethod =
       hasAnyBase(hasType(cxxRecordDecl(has(cxxMethodDecl(isVirtual())))));
 
   Finder->addMatcher(
