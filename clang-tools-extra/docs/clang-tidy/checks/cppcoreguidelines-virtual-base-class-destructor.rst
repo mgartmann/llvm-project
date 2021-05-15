@@ -13,8 +13,6 @@ private destructors. There, the decision whether to make them private and
 virtual or protected and non-virtual depends on the use case and is thus left
 to the user.
 
-This check implements `C.35 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c35-a-base-class-destructor-should-be-either-public-and-virtual-or-protected-and-non-virtual>`_ from the CppCoreGuidelines.
-
 Example
 -------
 
@@ -50,3 +48,5 @@ This would be rewritten to look like this:
   public:
     virtual ~Bar(){};
   };
+
+This check implements `C.35 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c35-a-base-class-destructor-should-be-either-public-and-virtual-or-protected-and-non-virtual>`_ from the CppCoreGuidelines.
