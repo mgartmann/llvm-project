@@ -124,8 +124,50 @@ public:
 };
 
 class ProtectedNonVirtualClass { // OK
+public:
   virtual void f();
 
 protected:
   ~ProtectedNonVirtualClass(){};
 };
+
+// CHECK-MESSAGES: :[[@LINE+6]]:7: warning: destructor of 'OverridingDerivedClass' is public and non-virtual. It should either be public and virtual or protected and non-virtual [cppcoreguidelines-virtual-base-class-destructor]
+// CHECK-FIXES: class OverridingDerivedClass : ProtectedNonVirtualClass {
+// CHECK-FIXES-NEXT: public:
+// CHECK-FIXES-NEXT: virtual ~OverridingDerivedClass() = default;
+// CHECK-FIXES-NEXT: void f() override;
+// CHECK-FIXES-NEXT: };
+class OverridingDerivedClass : ProtectedNonVirtualClass {
+  public:
+    void f() override; // is implicitly virtual
+};
+
+// CHECK-MESSAGES: :[[@LINE+6]]:7: warning: destructor of 'NonOverridingDerivedClass' is public and non-virtual. It should either be public and virtual or protected and non-virtual [cppcoreguidelines-virtual-base-class-destructor]
+// CHECK-FIXES: class NonOverridingDerivedClass : ProtectedNonVirtualClass {
+// CHECK-FIXES-NEXT: void m();
+// CHECK-FIXES-NEXT: public:
+// CHECK-FIXES-NEXT: virtual ~NonOverridingDerivedClass() = default;
+// CHECK-FIXES-NEXT: };
+class NonOverridingDerivedClass : ProtectedNonVirtualClass {
+  void m();
+};
+// inherits virtual method
+
+// CHECK-MESSAGES: :[[@LINE+5]]:8: warning: destructor of 'OverridingDerivedStruct' is public and non-virtual. It should either be public and virtual or protected and non-virtual [cppcoreguidelines-virtual-base-class-destructor]
+// CHECK-FIXES: struct OverridingDerivedStruct : ProtectedNonVirtualBaseStruct {
+// CHECK-FIXES-NEXT: virtual ~OverridingDerivedStruct() = default;
+// CHECK-FIXES-NEXT: void f() override;
+// CHECK-FIXES-NEXT: };
+struct OverridingDerivedStruct : ProtectedNonVirtualBaseStruct {
+  void f() override; // is implicitly virtual
+};
+
+// CHECK-MESSAGES: :[[@LINE+5]]:8: warning: destructor of 'NonOverridingDerivedStruct' is public and non-virtual. It should either be public and virtual or protected and non-virtual [cppcoreguidelines-virtual-base-class-destructor]
+// CHECK-FIXES: struct NonOverridingDerivedStruct : ProtectedNonVirtualBaseStruct {
+// CHECK-FIXES-NEXT: virtual ~NonOverridingDerivedStruct() = default;
+// CHECK-FIXES-NEXT: void m();
+// CHECK-FIXES-NEXT: };
+struct NonOverridingDerivedStruct : ProtectedNonVirtualBaseStruct {
+  void m();
+};
+// inherits virtual method
