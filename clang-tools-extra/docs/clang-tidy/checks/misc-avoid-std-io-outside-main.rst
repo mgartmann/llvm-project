@@ -18,15 +18,13 @@ outside of ``main()`` would get flagged whereas the use of them inside
   #include <cstdio>
 
   void some_function() {
-    std::cout << "This triggers the check.";
-         ~~~~
-    std::printf("This triggers the check.");
-         ~~~~~
+    std::cout << "This triggers the check."; // NOK
+    std::printf("This triggers the check."); // NOK
   }
 
   int main() {
-    std::cout << "This does not trigger the check.";
-    std::printf("This does not trigger the check.");
+    std::cout << "This does not trigger the check."; // OK
+    std::printf("This does not trigger the check."); // OK
   }
 
 Since the predefined standard stream objects are global objects, their use
