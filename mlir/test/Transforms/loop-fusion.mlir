@@ -3068,3 +3068,233 @@ func @call_op_does_not_prevent_fusion(%arg0: memref<16xf32>){
 // CHECK-LABEL: func @call_op_does_not_prevent_fusion
 // CHECK:         affine.for
 // CHECK-NOT:     affine.for
+
+// -----
+
+// Fusion is avoided when the slice computed is invalid. Comments below describe
+// incorrect backward slice computation. Similar logic applies for forward slice
+// as well.
+func @no_fusion_cannot_compute_valid_slice() {
+  %A = memref.alloc() : memref<5xf32>
+  %B = memref.alloc() : memref<6xf32>
+  %C = memref.alloc() : memref<5xf32>
+  %cst = constant 0. : f32
+
+  affine.for %arg0 = 0 to 5 {
+    %a = affine.load %A[%arg0] : memref<5xf32>
+    affine.store %a, %B[%arg0 + 1] : memref<6xf32>
+  }
+
+  affine.for %arg0 = 0 to 5 {
+    // Backward slice computed will be:
+    // slice ( src loop: 0, dst loop: 1, depth: 1 : insert point: (1, 0)
+    // loop bounds: [(d0) -> (d0 - 1), (d0) -> (d0)] )
+
+    // Resulting fusion would be as below. It is easy to note the out-of-bounds
+    // access by 'affine.load'.
+
+    // #map0 = affine_map<(d0) -> (d0 - 1)>
+    // #map1 = affine_map<(d0) -> (d0)>
+    // affine.for %arg1 = #map0(%arg0) to #map1(%arg0) {
+    //   %5 = affine.load %1[%arg1] : memref<5xf32>
+    //   ...
+    //   ...
+    // }
+
+    %a = affine.load %B[%arg0] : memref<6xf32>
+    %b = mulf %a, %cst : f32
+    affine.store %b, %C[%arg0] : memref<5xf32>
+  }
+  return
+}
+// CHECK-LABEL: func @no_fusion_cannot_compute_valid_slice
+// CHECK:         affine.for
+// CHECK-NEXT:      affine.load
+// CHECK-NEXT:      affine.store
+// CHECK:         affine.for
+// CHECK-NEXT:      affine.load
+// CHECK-NEXT:      mulf
+// CHECK-NEXT:      affine.store
+
+// -----
+
+// CHECK-LABEL: func @fuse_large_number_of_loops
+func @fuse_large_number_of_loops(%arg0: memref<20x10xf32, 1>, %arg1: memref<20x10xf32, 1>, %arg2: memref<20x10xf32, 1>, %arg3: memref<20x10xf32, 1>, %arg4: memref<20x10xf32, 1>, %arg5: memref<f32, 1>, %arg6: memref<f32, 1>, %arg7: memref<f32, 1>, %arg8: memref<f32, 1>, %arg9: memref<20x10xf32, 1>, %arg10: memref<20x10xf32, 1>, %arg11: memref<20x10xf32, 1>, %arg12: memref<20x10xf32, 1>) {
+  %cst = constant 1.000000e+00 : f32
+  %0 = memref.alloc() : memref<f32, 1>
+  affine.store %cst, %0[] : memref<f32, 1>
+  %1 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %arg6[] : memref<f32, 1>
+      affine.store %21, %1[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %2 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %1[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %arg3[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = mulf %22, %21 : f32
+      affine.store %23, %2[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %3 = memref.alloc() : memref<f32, 1>
+  %4 = affine.load %arg6[] : memref<f32, 1>
+  %5 = affine.load %0[] : memref<f32, 1>
+  %6 = subf %5, %4 : f32
+  affine.store %6, %3[] : memref<f32, 1>
+  %7 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %3[] : memref<f32, 1>
+      affine.store %21, %7[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %8 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %arg1[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %7[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = mulf %22, %21 : f32
+      affine.store %23, %8[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %9 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %arg1[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %8[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = mulf %22, %21 : f32
+      affine.store %23, %9[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %9[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %2[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = addf %22, %21 : f32
+      affine.store %23, %arg11[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %10 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %1[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %arg2[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = mulf %22, %21 : f32
+      affine.store %23, %10[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %8[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %10[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = addf %22, %21 : f32
+      affine.store %23, %arg10[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %11 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %arg10[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %arg10[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = mulf %22, %21 : f32
+      affine.store %23, %11[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %12 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %11[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %arg11[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = subf %22, %21 : f32
+      affine.store %23, %12[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %13 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %arg7[] : memref<f32, 1>
+      affine.store %21, %13[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %14 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %arg4[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %13[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = mulf %22, %21 : f32
+      affine.store %23, %14[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %15 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %arg8[] : memref<f32, 1>
+      affine.store %21, %15[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %16 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %15[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %12[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = addf %22, %21 : f32
+      affine.store %23, %16[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %17 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %16[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = math.sqrt %21 : f32
+      affine.store %22, %17[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %18 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %arg5[] : memref<f32, 1>
+      affine.store %21, %18[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %19 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %arg1[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %18[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = mulf %22, %21 : f32
+      affine.store %23, %19[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  %20 = memref.alloc() : memref<20x10xf32, 1>
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %17[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %19[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = divf %22, %21 : f32
+      affine.store %23, %20[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %20[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %14[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = addf %22, %21 : f32
+      affine.store %23, %arg12[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  affine.for %arg13 = 0 to 20 {
+    affine.for %arg14 = 0 to 10 {
+      %21 = affine.load %arg12[%arg13, %arg14] : memref<20x10xf32, 1>
+      %22 = affine.load %arg0[%arg13, %arg14] : memref<20x10xf32, 1>
+      %23 = subf %22, %21 : f32
+      affine.store %23, %arg9[%arg13, %arg14] : memref<20x10xf32, 1>
+    }
+  }
+  return
+}
+// CHECK:         affine.for
+// CHECK:         affine.for
+// CHECK-NOT:     affine.for

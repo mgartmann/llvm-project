@@ -319,7 +319,8 @@ static Error handleMaybeNoDataFoundError(Error E) {
 
 Expected<std::unique_ptr<CoverageMapping>>
 CoverageMapping::load(ArrayRef<StringRef> ObjectFilenames,
-                      StringRef ProfileFilename, ArrayRef<StringRef> Arches) {
+                      StringRef ProfileFilename, ArrayRef<StringRef> Arches,
+                      StringRef CompilationDir) {
   auto ProfileReaderOrErr = IndexedInstrProfReader::create(ProfileFilename);
   if (Error E = ProfileReaderOrErr.takeError())
     return std::move(E);
@@ -329,15 +330,15 @@ CoverageMapping::load(ArrayRef<StringRef> ObjectFilenames,
 
   for (const auto &File : llvm::enumerate(ObjectFilenames)) {
     auto CovMappingBufOrErr = MemoryBuffer::getFileOrSTDIN(
-        File.value(), /*FileSize=*/-1, /*RequiresNullTerminator=*/false);
+        File.value(), /*IsText=*/false, /*RequiresNullTerminator=*/false);
     if (std::error_code EC = CovMappingBufOrErr.getError())
       return errorCodeToError(EC);
     StringRef Arch = Arches.empty() ? StringRef() : Arches[File.index()];
     MemoryBufferRef CovMappingBufRef =
         CovMappingBufOrErr.get()->getMemBufferRef();
     SmallVector<std::unique_ptr<MemoryBuffer>, 4> Buffers;
-    auto CoverageReadersOrErr =
-        BinaryCoverageReader::create(CovMappingBufRef, Arch, Buffers);
+    auto CoverageReadersOrErr = BinaryCoverageReader::create(
+        CovMappingBufRef, Arch, Buffers, CompilationDir);
     if (Error E = CoverageReadersOrErr.takeError()) {
       E = handleMaybeNoDataFoundError(std::move(E));
       if (E)

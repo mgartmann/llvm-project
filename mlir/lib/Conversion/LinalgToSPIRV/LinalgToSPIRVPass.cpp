@@ -27,7 +27,7 @@ void LinalgToSPIRVPass::runOnOperation() {
 
   auto targetAttr = spirv::lookupTargetEnvOrDefault(module);
   std::unique_ptr<ConversionTarget> target =
-      spirv::SPIRVConversionTarget::get(targetAttr);
+      SPIRVConversionTarget::get(targetAttr);
 
   SPIRVTypeConverter typeConverter(targetAttr);
   RewritePatternSet patterns(context);
@@ -35,7 +35,7 @@ void LinalgToSPIRVPass::runOnOperation() {
   populateBuiltinFuncToSPIRVPatterns(typeConverter, patterns);
 
   // Allow builtin ops.
-  target->addLegalOp<ModuleOp, ModuleTerminatorOp>();
+  target->addLegalOp<ModuleOp>();
   target->addDynamicallyLegalOp<FuncOp>([&](FuncOp op) {
     return typeConverter.isSignatureLegal(op.getType()) &&
            typeConverter.isLegal(&op.getBody());

@@ -190,6 +190,10 @@ public:
   /// The ABI to use for passing floating point arguments.
   std::string FloatABI;
 
+  /// The file to use for dumping bug report by `Debugify` for original
+  /// debug info.
+  std::string DIBugsReportFilePath;
+
   /// The floating-point denormal mode to use.
   llvm::DenormalMode FPDenormalMode = llvm::DenormalMode::getIEEE();
 
@@ -380,10 +384,10 @@ public:
   /// On x86 this can be "fs" or "gs".
   std::string StackProtectorGuardReg;
 
-  /// Path to blocklist file specifying which objects
+  /// Path to ignorelist file specifying which objects
   /// (files, functions) listed for instrumentation by sanitizer
   /// coverage pass should actually not be instrumented.
-  std::vector<std::string> SanitizeCoverageBlocklistFiles;
+  std::vector<std::string> SanitizeCoverageIgnorelistFiles;
 
   /// Executable and command-line used to create a given CompilerInvocation.
   /// Most of the time this will be the full -cc1 command.

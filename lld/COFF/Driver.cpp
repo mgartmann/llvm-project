@@ -157,9 +157,8 @@ static std::future<MBErrPair> createFutureForFile(std::string path) {
   auto strategy = std::launch::deferred;
 #endif
   return std::async(strategy, [=]() {
-    auto mbOrErr = MemoryBuffer::getFile(path,
-                                         /*FileSize*/ -1,
-                                         /*RequiresNullTerminator*/ false);
+    auto mbOrErr = MemoryBuffer::getFile(path, /*IsText=*/false,
+                                         /*RequiresNullTerminator=*/false);
     if (!mbOrErr)
       return MBErrPair{nullptr, mbOrErr.getError()};
     return MBErrPair{std::move(*mbOrErr), std::error_code()};
@@ -408,6 +407,10 @@ void LinkerDriver::parseDirectives(InputFile *file) {
       break;
     case OPT_section:
       parseSection(arg->getValue());
+      break;
+    case OPT_stack:
+      parseNumbers(arg->getValue(), &config->stackReserve,
+                   &config->stackCommit);
       break;
     case OPT_subsystem: {
       bool gotVersion = false;
@@ -829,7 +832,7 @@ static void createImportLibrary(bool asLib) {
   // If the import library already exists, replace it only if the contents
   // have changed.
   ErrorOr<std::unique_ptr<MemoryBuffer>> oldBuf = MemoryBuffer::getFile(
-      path, /*FileSize*/ -1, /*RequiresNullTerminator*/ false);
+      path, /*IsText=*/false, /*RequiresNullTerminator=*/false);
   if (!oldBuf) {
     handleError(writeImportLibrary(libName, path, exports, config->machine,
                                    config->mingw));
@@ -849,7 +852,7 @@ static void createImportLibrary(bool asLib) {
   }
 
   std::unique_ptr<MemoryBuffer> newBuf = check(MemoryBuffer::getFile(
-      tmpName, /*FileSize*/ -1, /*RequiresNullTerminator*/ false));
+      tmpName, /*IsText=*/false, /*RequiresNullTerminator=*/false));
   if ((*oldBuf)->getBuffer() != newBuf->getBuffer()) {
     oldBuf->reset();
     handleError(errorCodeToError(sys::fs::rename(tmpName, path)));
@@ -859,8 +862,11 @@ static void createImportLibrary(bool asLib) {
 }
 
 static void parseModuleDefs(StringRef path) {
-  std::unique_ptr<MemoryBuffer> mb = CHECK(
-      MemoryBuffer::getFile(path, -1, false, true), "could not open " + path);
+  std::unique_ptr<MemoryBuffer> mb =
+      CHECK(MemoryBuffer::getFile(path, /*IsText=*/false,
+                                  /*RequiresNullTerminator=*/false,
+                                  /*IsVolatile=*/true),
+            "could not open " + path);
   COFFModuleDefinition m = check(parseCOFFModuleDefinition(
       mb->getMemBufferRef(), config->machine, config->mingw));
 
@@ -948,8 +954,11 @@ static void parseOrderFile(StringRef arg) {
 
   // Open a file.
   StringRef path = arg.substr(1);
-  std::unique_ptr<MemoryBuffer> mb = CHECK(
-      MemoryBuffer::getFile(path, -1, false, true), "could not open " + path);
+  std::unique_ptr<MemoryBuffer> mb =
+      CHECK(MemoryBuffer::getFile(path, /*IsText=*/false,
+                                  /*RequiresNullTerminator=*/false,
+                                  /*IsVolatile=*/true),
+            "could not open " + path);
 
   // Parse a file. An order file contains one symbol per line.
   // All symbols that were not present in a given order file are
@@ -973,8 +982,11 @@ static void parseOrderFile(StringRef arg) {
 }
 
 static void parseCallGraphFile(StringRef path) {
-  std::unique_ptr<MemoryBuffer> mb = CHECK(
-      MemoryBuffer::getFile(path, -1, false, true), "could not open " + path);
+  std::unique_ptr<MemoryBuffer> mb =
+      CHECK(MemoryBuffer::getFile(path, /*IsText=*/false,
+                                  /*RequiresNullTerminator=*/false,
+                                  /*IsVolatile=*/true),
+            "could not open " + path);
 
   // Build a map from symbol name to section.
   DenseMap<StringRef, Symbol *> map;
@@ -1196,6 +1208,11 @@ void LinkerDriver::maybeExportMinGWSymbols(const opt::InputArgList &args) {
     auto *def = dyn_cast<Defined>(s);
     if (!exporter.shouldExport(def))
       return;
+
+    if (!def->isGCRoot) {
+      def->isGCRoot = true;
+      config->gcroot.push_back(def);
+    }
 
     Export e;
     e.name = def->getName();
@@ -1712,6 +1729,8 @@ void LinkerDriver::linkerMain(ArrayRef<const char *> argsArr) {
   config->thinLTOObjectSuffixReplace =
       getOldNewOptions(args, OPT_thinlto_object_suffix_replace);
   config->ltoObjPath = args.getLastArgValue(OPT_lto_obj_path);
+  config->ltoCSProfileGenerate = args.hasArg(OPT_lto_cs_profile_generate);
+  config->ltoCSProfileFile = args.getLastArgValue(OPT_lto_cs_profile_file);
   // Handle miscellaneous boolean flags.
   config->allowBind = args.hasFlag(OPT_allowbind, OPT_allowbind_no, true);
   config->allowIsolation =
@@ -1998,6 +2017,9 @@ void LinkerDriver::linkerMain(ArrayRef<const char *> argsArr) {
   symtab->addAbsolute(mangle("__guard_longjmp_table"), 0);
   // Needed for MSVC 2017 15.5 CRT.
   symtab->addAbsolute(mangle("__enclave_config"), 0);
+  // Needed for MSVC 2019 16.8 CRT.
+  symtab->addAbsolute(mangle("__guard_eh_cont_count"), 0);
+  symtab->addAbsolute(mangle("__guard_eh_cont_table"), 0);
 
   if (config->pseudoRelocs) {
     symtab->addAbsolute(mangle("__RUNTIME_PSEUDO_RELOC_LIST__"), 0);
