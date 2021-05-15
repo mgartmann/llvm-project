@@ -138,8 +138,8 @@ protected:
 // CHECK-FIXES-NEXT: void f() override;
 // CHECK-FIXES-NEXT: };
 class OverridingDerivedClass : ProtectedNonVirtualClass {
-  public:
-    void f() override; // is implicitly virtual
+public:
+  void f() override; // is implicitly virtual
 };
 
 // CHECK-MESSAGES: :[[@LINE+6]]:7: warning: destructor of 'NonOverridingDerivedClass' is public and non-virtual. It should either be public and virtual or protected and non-virtual [cppcoreguidelines-virtual-base-class-destructor]
