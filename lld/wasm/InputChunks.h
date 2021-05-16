@@ -89,10 +89,6 @@ protected:
   virtual ArrayRef<uint8_t> data() const = 0;
   virtual uint64_t getTombstone() const { return 0; }
 
-  // Verifies the existing data at relocation targets matches our expectations.
-  // This is performed only debug builds as an extra sanity check.
-  void verifyRelocTargets() const;
-
   ArrayRef<WasmRelocation> relocations;
   Kind sectionKind;
 };
@@ -137,8 +133,11 @@ public:
 
   uint64_t getVA(uint64_t offset = 0) const;
 
-  bool isTLS() {
-    return getName().startswith(".tdata") || getName().startswith(".tbss");
+  bool isTLS() const {
+    // Older object files don't include WASM_SEG_FLAG_TLS and instead
+    // relied on the naming convention.
+    return flags & llvm::wasm::WASM_SEG_FLAG_TLS ||
+           getName().startswith(".tdata") || getName().startswith(".tbss");
   }
 
   const OutputSegment *outputSeg = nullptr;
