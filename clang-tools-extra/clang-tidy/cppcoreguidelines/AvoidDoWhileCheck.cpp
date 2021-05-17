@@ -16,8 +16,17 @@ namespace clang {
 namespace tidy {
 namespace cppcoreguidelines {
 
+AST_MATCHER(DoStmt, isInMacro) { return Node.getBeginLoc().isMacroID(); }
+
 void AvoidDoWhileCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(doStmt().bind("doStmt"), this);
+  Finder->addMatcher(
+      doStmt(unless(allOf(
+                 isInMacro(),
+                 hasCondition(ignoringImpCasts(anyOf(
+                     cxxBoolLiteral(equals(false)), integerLiteral(equals(0)),
+                      cxxNullPtrLiteralExpr(), gnuNullExpr()))))))
+          .bind("doStmt"),
+      this);
 }
 
 void AvoidDoWhileCheck::check(const MatchFinder::MatchResult &Result) {

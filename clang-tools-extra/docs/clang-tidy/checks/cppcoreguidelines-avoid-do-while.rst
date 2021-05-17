@@ -3,9 +3,11 @@
 cppcoreguidelines-avoid-do-while
 ================================
 
-Checks if a do-while loop exists and flags it.
+Checks if a ``do-while`` loop exists and flags it.
 
-Using a while loop instead of a do-while could improve readability and prevents overlooking the condition at the end.
+Using a ``while`` loop instead of a ``do-while`` could improve readability and prevents overlooking the condition at the end.
+
+Usages of a ``do-while`` loop inside a macro definition are excluded by this check, if the condition is either ``false``, ``0``, ``nullptr`` or ``__null``.
 
 .. code-block:: c++
 

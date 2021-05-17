@@ -111,7 +111,7 @@ New checks
 - New :doc:`cppcoreguidelines-avoid-do-while
   <clang-tidy/checks/cppcoreguidelines-avoid-do-while>` check.
 
-  Checks if a do-while loop exists and flags it.
+  Checks if a ``do-while`` loop exists and flags it.
 
 - New :doc:`cppcoreguidelines-prefer-member-initializer
   <clang-tidy/checks/cppcoreguidelines-prefer-member-initializer>` check.
