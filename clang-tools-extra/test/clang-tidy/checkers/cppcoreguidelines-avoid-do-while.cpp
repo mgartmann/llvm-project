@@ -21,55 +21,73 @@ void func2() {
 }
 
 void func3() {
-  #define MACRO do { ; } while(true)
+#define MACRO \
+  do {        \
+    ;         \
+  } while (true)
 
   // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: Try to avoid using do-while loops in terms of readability. Consider using a while loop instead. [cppcoreguidelines-avoid-do-while]
   MACRO;
 
-  #undef MACRO
+#undef MACRO
 }
 
 void func4() {
-  #define MACRO do { ; } while(1)
+#define MACRO \
+  do {        \
+    ;         \
+  } while (1)
 
   // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: Try to avoid using do-while loops in terms of readability. Consider using a while loop instead. [cppcoreguidelines-avoid-do-while]
   MACRO;
 
-  #undef MACRO
+#undef MACRO
 }
 
 void func5() {
-  #define MACRO do { ; } while(false)
+#define MACRO \
+  do {        \
+    ;         \
+  } while (false)
 
   // OK
   MACRO;
 
-  #undef MACRO
+#undef MACRO
 }
 
 void func6() {
-  #define MACRO do { ; } while(0)
+#define MACRO \
+  do {        \
+    ;         \
+  } while (0)
 
   // OK
   MACRO;
 
-  #undef MACRO
+#undef MACRO
 }
 
 void func7() {
-  #define MACRO do { ; } while(nullptr)
+#define MACRO \
+  do {        \
+    ;         \
+  } while (nullptr)
 
   // OK
   MACRO;
 
-  #undef MACRO
+#undef MACRO
 }
 
 void func8() {
-  #define MACRO do { ; } while(__null)
+#define MACRO \
+  do {        \
+    ;         \
+  } while (__null)
 
   // OK
   MACRO;
 
-  #undef MACRO
+#undef MACRO
 }

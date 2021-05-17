@@ -24,7 +24,7 @@ void AvoidDoWhileCheck::registerMatchers(MatchFinder *Finder) {
                  isInMacro(),
                  hasCondition(ignoringImpCasts(anyOf(
                      cxxBoolLiteral(equals(false)), integerLiteral(equals(0)),
-                      cxxNullPtrLiteralExpr(), gnuNullExpr()))))))
+                     cxxNullPtrLiteralExpr(), gnuNullExpr()))))))
           .bind("doStmt"),
       this);
 }
