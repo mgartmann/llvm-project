@@ -147,6 +147,12 @@ Changes in existing checks
   function or assignment to ``nullptr``.
   Added support for pointers to ``std::unique_ptr``.
 
+- Improved :doc:`google-explicit-constructor
+  <clang-tidy/checks/google-explicit-constructor>` check.
+
+  Added an option to disable warnings for constructors contained in a
+  whitelist.
+
 Removed checks
 ^^^^^^^^^^^^^^
 

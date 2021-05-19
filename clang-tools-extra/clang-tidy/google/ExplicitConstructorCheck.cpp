@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ExplicitConstructorCheck.h"
+#include "../utils/OptionsUtils.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
@@ -17,11 +18,24 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 namespace google {
+namespace {
+auto hasAnyWhitelistedName(const std::string &Names) {
+  const std::vector<std::string> NameList =
+      utils::options::parseStringList(Names);
+  return hasAnyName(std::vector<StringRef>(NameList.begin(), NameList.end()));
+}
+} // namespace
+
+void ExplicitConstructorCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
+  Options.store(Opts, "ConstructorWhitelist", ConstructorWhitelist);
+}
 
 void ExplicitConstructorCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
-      cxxConstructorDecl(unless(anyOf(isImplicit(), // Compiler-generated.
-                                      isDeleted(), isInstantiated())))
+      cxxConstructorDecl(
+          unless(anyOf(isImplicit(), // Compiler-generated.
+                       isDeleted(), isInstantiated(),
+                       hasAnyWhitelistedName(ConstructorWhitelist))))
           .bind("ctor"),
       this);
   Finder->addMatcher(
@@ -85,7 +99,7 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
       "%0 must be marked explicit to avoid unintentional implicit conversions";
 
   if (const auto *Conversion =
-      Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
+          Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
     if (Conversion->isOutOfLine())
       return;
     SourceLocation Loc = Conversion->getLocation();

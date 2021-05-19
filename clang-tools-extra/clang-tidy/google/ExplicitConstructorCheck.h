@@ -24,12 +24,17 @@ namespace google {
 class ExplicitConstructorCheck : public ClangTidyCheck {
 public:
   ExplicitConstructorCheck(StringRef Name, ClangTidyContext *Context)
-      : ClangTidyCheck(Name, Context) {}
+      : ClangTidyCheck(Name, Context),
+        ConstructorWhitelist(Options.get("ConstructorWhitelist", "")) {}
+  void storeOptions(ClangTidyOptions::OptionMap &Opts) override;
   bool isLanguageVersionSupported(const LangOptions &LangOpts) const override {
     return LangOpts.CPlusPlus;
   }
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+
+private:
+  const std::string ConstructorWhitelist;
 };
 
 } // namespace google

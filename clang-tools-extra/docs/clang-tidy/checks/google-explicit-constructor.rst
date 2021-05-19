@@ -54,3 +54,13 @@ will become
 
 
 See https://google.github.io/styleguide/cppguide.html#Explicit_Constructors
+
+Options
+-------
+
+.. option:: ConstructorWhitelist
+
+    Non-explicit single-argument constructors in this semicolon-separated list
+    will be ignored and will not trigger a warning. This option is used by this
+    check's `cppcoreguidelines-explicit-constructor-and-conversion <cppcoreguidelines-explicit-constructor-and-conversion.html>`_
+    alias to comply with the CppCoreGuidelines. The default list is empty.
