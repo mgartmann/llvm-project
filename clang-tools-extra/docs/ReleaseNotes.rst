@@ -127,6 +127,11 @@ New check aliases
   :doc:`concurrency-thread-canceltype-asynchronous
   <clang-tidy/checks/concurrency-thread-canceltype-asynchronous>` was added.
 
+- New alias :doc:`cppcoreguidelines-explicit-constructor-and-conversion
+  <clang-tidy/checks/cppcoreguidelines-explicit-constructor-and-conversion>` to
+  :doc:`google-explicit-constructor
+  <clang-tidy/checks/google-explicit-constructor>` was added.
+
 Changes in existing checks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 

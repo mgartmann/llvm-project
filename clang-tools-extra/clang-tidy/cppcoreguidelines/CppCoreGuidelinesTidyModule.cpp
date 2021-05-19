@@ -54,7 +54,7 @@ public:
     CheckFactories.registerCheck<AvoidNonConstGlobalVariablesCheck>(
         "cppcoreguidelines-avoid-non-const-global-variables");
     CheckFactories.registerCheck<google::ExplicitConstructorCheck>(
-        "cppcoreguidelines-explicit-constructor");
+        "cppcoreguidelines-explicit-constructor-and-conversion");
     CheckFactories.registerCheck<modernize::UseOverrideCheck>(
         "cppcoreguidelines-explicit-virtual-functions");
     CheckFactories.registerCheck<InitVariablesCheck>(
