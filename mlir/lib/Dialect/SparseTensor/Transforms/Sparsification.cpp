@@ -347,17 +347,27 @@ static Dim toDim(SparseTensorEncodingAttr &enc, unsigned d) {
 
 /// Helper method to inspect sparse encodings in the tensor types.
 /// Fills the per-dimension sparsity information for all tensors.
-static void findSparseAnnotations(Merger &merger, linalg::GenericOp op) {
+static bool findSparseAnnotations(Merger &merger, linalg::GenericOp op) {
+  bool annotated = false;
   unsigned numTensors = op.getNumShapedOperands();
+  unsigned lhs = numTensors - 1;
   for (unsigned t = 0; t < numTensors; t++) {
     auto map = op.getIndexingMap(t);
     unsigned rank = op.getShapedType(t).getRank();
     auto enc = getSparseTensorEncoding(op.getShapedType(t));
+    if (enc) {
+      annotated = true;
+      if (enc.getDimOrdering() && !enc.getDimOrdering().isIdentity())
+        return false; // TODO: handle permutations
+      if (t == lhs)
+        return false; // TODO: handle sparse outputs
+    }
     for (unsigned d = 0; d < rank; d++) {
       unsigned idx = map.getDimPosition(d);
       merger.setDim(t, idx, toDim(enc, d));
     }
   }
+  return annotated;
 }
 
 /// A DFS helper to compute a topological sort. Note that recursion is
@@ -506,6 +516,16 @@ static Type genIntType(PatternRewriter &rewriter, unsigned width) {
   return rewriter.getIntegerType(width);
 }
 
+/// Detects in-place annotation on tensor argument.
+static bool getInPlace(Value val) {
+  if (auto arg = val.dyn_cast<BlockArgument>())
+    if (auto funcOp = dyn_cast<FuncOp>(arg.getOwner()->getParentOp()))
+      if (auto attr = funcOp.getArgAttrOfType<BoolAttr>(
+              arg.getArgNumber(), linalg::LinalgDialect::kInplaceableAttrName))
+        return attr.getValue();
+  return false;
+}
+
 /// Generates buffer for the output tensor.
 static Value genOutputBuffer(CodeGen &codegen, PatternRewriter &rewriter,
                              linalg::GenericOp op, MemRefType denseTp,
@@ -515,9 +535,8 @@ static Value genOutputBuffer(CodeGen &codegen, PatternRewriter &rewriter,
   // The output tensor simply could materialize from the buffer that will
   // be generated for the tensor present in the outs() clause. This has
   // the major advantage that the sparse kernel only updates the nonzero
-  // positions for the output tensor. Currently this results in functional,
-  // but slightly imprecise IR, so it is put under an experimental option.
-  if (codegen.options.fastOutput)
+  // positions for the output tensor.
+  if (getInPlace(tensor))
     return rewriter.create<memref::BufferCastOp>(loc, denseTp, tensor);
   // By default, a new buffer is allocated which is initialized to the
   // tensor defined in the outs() clause. This is always correct but
@@ -1347,7 +1366,8 @@ public:
     unsigned numTensors = op.getNumShapedOperands();
     unsigned numLoops = op.iterator_types().getValue().size();
     Merger merger(numTensors, numLoops);
-    findSparseAnnotations(merger, op);
+    if (!findSparseAnnotations(merger, op))
+      return failure();
 
     // Computes a topologically sorted iteration graph to ensure
     // tensors are visited in natural index order. Fails on cycles.
