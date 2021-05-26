@@ -12,7 +12,6 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
-#include <iostream>
 
 using namespace clang::ast_matchers;
 
