@@ -31,8 +31,8 @@ AST_MATCHER_P(CXXConversionDecl, isIgnoredConversionOperator,
           Node.getNameAsString());
 
   return llvm::any_of(IgnoredConversionOps,
-                      [FullOperatorName](std::string Name) {
-                        return Name == FullOperatorName;
+                      [FullOperatorName](std::string NameInOptions) {
+                        return NameInOptions == FullOperatorName;
                       });
 }
 } // namespace
@@ -115,7 +115,7 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
       "%0 must be marked explicit to avoid unintentional implicit conversions";
 
   if (const auto *Conversion =
-      Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
+          Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
     if (Conversion->isOutOfLine())
       return;
     SourceLocation Loc = Conversion->getLocation();
