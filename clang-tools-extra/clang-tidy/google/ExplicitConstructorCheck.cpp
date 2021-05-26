@@ -12,6 +12,7 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
+#include <iostream>
 
 using namespace clang::ast_matchers;
 
@@ -19,29 +20,44 @@ namespace clang {
 namespace tidy {
 namespace google {
 namespace {
-auto hasAnyWhitelistedName(const std::string &Names) {
-  const std::vector<std::string> NameList =
-      utils::options::parseStringList(Names);
-  return hasAnyName(std::vector<StringRef>(NameList.begin(), NameList.end()));
+auto isIgnoredCtor(const std::vector<std::string> &Names) {
+  return hasAnyName(std::vector<StringRef>(Names.begin(), Names.end()));
+}
+
+AST_MATCHER_P(CXXConversionDecl, isIgnoredConversionOperator,
+              std::vector<std::string>, IgnoredConversionOps) {
+  std::string FullOperatorName =
+      Node.getParent()->getNameAsString().append("::").append(
+          Node.getNameAsString());
+
+  return llvm::any_of(IgnoredConversionOps,
+                      [FullOperatorName](std::string Name) {
+                        return Name == FullOperatorName;
+                      });
 }
 } // namespace
 
 void ExplicitConstructorCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
-  Options.store(Opts, "ConstructorWhitelist", ConstructorWhitelist);
+  Options.store(Opts, "IgnoredConstructors",
+                utils::options::serializeStringList(IgnoredConstructors));
+  Options.store(
+      Opts, "IgnoredConversionOperators",
+      utils::options::serializeStringList(IgnoredConversionOperators));
 }
 
 void ExplicitConstructorCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
-      cxxConstructorDecl(
-          unless(anyOf(isImplicit(), // Compiler-generated.
-                       isDeleted(), isInstantiated(),
-                       hasAnyWhitelistedName(ConstructorWhitelist))))
+      cxxConstructorDecl(unless(anyOf(isImplicit(), // Compiler-generated.
+                                      isDeleted(), isInstantiated(),
+                                      isIgnoredCtor(IgnoredConstructors))))
           .bind("ctor"),
       this);
   Finder->addMatcher(
       cxxConversionDecl(unless(anyOf(isExplicit(), // Already marked explicit.
                                      isImplicit(), // Compiler-generated.
-                                     isDeleted(), isInstantiated())))
+                                     isDeleted(), isInstantiated(),
+                                     isIgnoredConversionOperator(
+                                         IgnoredConversionOperators))))
 
           .bind("conversion"),
       this);
@@ -99,7 +115,7 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
       "%0 must be marked explicit to avoid unintentional implicit conversions";
 
   if (const auto *Conversion =
-          Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
+      Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
     if (Conversion->isOutOfLine())
       return;
     SourceLocation Loc = Conversion->getLocation();
