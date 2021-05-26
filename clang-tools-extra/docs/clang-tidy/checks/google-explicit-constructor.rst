@@ -58,9 +58,18 @@ See https://google.github.io/styleguide/cppguide.html#Explicit_Constructors
 Options
 -------
 
-.. option:: ConstructorWhitelist
+.. option:: IgnoredConstructors
 
     Non-explicit single-argument constructors in this semicolon-separated list
-    will be ignored and will not trigger a warning. This option is used by this
-    check's `cppcoreguidelines-explicit-constructor-and-conversion <cppcoreguidelines-explicit-constructor-and-conversion.html>`_
-    alias to comply with the CppCoreGuidelines. The default list is empty.
+    will be ignored and will not trigger a warning. To ignore constructors of a
+    class `A`, the list would look as follows: `"A"`. The default list is
+    empty. This option is used by this check's
+    `cppcoreguidelines-explicit-constructor-and-conversion <cppcoreguidelines-explicit-constructor-and-conversion.html>`_
+    alias to comply with the CppCoreGuidelines.
+
+.. option:: IgnoredConversionOperators
+
+    Non-explicit conversion operators in this semicolon-separated list will be
+    ignored and will not trigger a warning. The list to ignore conversion
+    operator `operator B()` in class `A` would look as follows:
+    `"A::operator B"`. The default list is empty.
