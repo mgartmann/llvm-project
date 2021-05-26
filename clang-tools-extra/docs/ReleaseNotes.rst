@@ -150,8 +150,8 @@ Changes in existing checks
 - Improved :doc:`google-explicit-constructor
   <clang-tidy/checks/google-explicit-constructor>` check.
 
-  Added an option to disable warnings for constructors contained in a
-  whitelist.
+  Added options to disable warnings for constructors and conversion operators
+  contained in a ignore-list.
 
 Removed checks
 ^^^^^^^^^^^^^^
