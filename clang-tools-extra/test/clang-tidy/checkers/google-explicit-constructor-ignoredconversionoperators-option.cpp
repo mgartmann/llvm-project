@@ -85,4 +85,6 @@ struct C {
   // CHECK-MESSAGES-DEFAULT: :[[@LINE-1]]:3: warning: 'operator A' must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]
   // CHECK-MESSAGES-IGNORED: :[[@LINE-2]]:3: warning: 'operator A' must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]
   // CHECK-FIXES: {{^  }}explicit operator A() const;
+
+  explicit operator B() const;
 };
