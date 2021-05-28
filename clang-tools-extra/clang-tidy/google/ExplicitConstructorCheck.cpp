@@ -30,7 +30,7 @@ AST_MATCHER_P(CXXConversionDecl, isIgnoredConversionOperator,
           Node.getNameAsString());
 
   return llvm::any_of(IgnoredConversionOps,
-                      [FullOperatorName](std::string NameInOptions) {
+                      [FullOperatorName](const std::string &NameInOptions) {
                         return NameInOptions == FullOperatorName;
                       });
 }
