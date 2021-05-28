@@ -630,13 +630,13 @@ void RISCVDAGToDAGISel::Select(SDNode *Node) {
       assert(Node->getNumOperands() == Offset + 2 &&
              "Unexpected number of operands");
 
-      RISCVII::VSEW VSEW =
-          static_cast<RISCVII::VSEW>(Node->getConstantOperandVal(Offset) & 0x7);
+      unsigned SEW =
+          RISCVVType::decodeVSEW(Node->getConstantOperandVal(Offset) & 0x7);
       RISCVII::VLMUL VLMul = static_cast<RISCVII::VLMUL>(
           Node->getConstantOperandVal(Offset + 1) & 0x7);
 
       unsigned VTypeI = RISCVVType::encodeVTYPE(
-          VLMul, VSEW, /*TailAgnostic*/ true, /*MaskAgnostic*/ false);
+          VLMul, SEW, /*TailAgnostic*/ true, /*MaskAgnostic*/ false);
       SDValue VTypeIOp = CurDAG->getTargetConstant(VTypeI, DL, XLenVT);
 
       SDValue VLOperand;
@@ -1284,23 +1284,6 @@ bool RISCVDAGToDAGISel::selectZExti32(SDValue N, SDValue &Val) {
     return true;
   }
 
-  return false;
-}
-
-// Check if (add r, imm) can be optimized to (ADDI (ADDI r, imm0), imm1),
-// in which imm = imm0 + imm1 and both imm0 and imm1 are simm12.
-bool RISCVDAGToDAGISel::selectAddiPair(SDValue N, SDValue &Val) {
-  if (auto *ConstOp = dyn_cast<ConstantSDNode>(N)) {
-    // The immediate operand must have only use.
-    if (!(ConstOp->hasOneUse()))
-      return false;
-    // The immediate operand must be in range [-4096,-2049] or [2048,4094].
-    int64_t Imm = ConstOp->getSExtValue();
-    if ((-4096 <= Imm && Imm <= -2049) || (2048 <= Imm && Imm <= 4094)) {
-      Val = N;
-      return true;
-    }
-  }
   return false;
 }
 

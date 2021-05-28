@@ -59,6 +59,10 @@ struct LSPServer::Impl {
   MLIRServer &server;
   JSONTransport &transport;
 
+  /// An outgoing notification used to send diagnostics to the client when they
+  /// are ready to be processed.
+  OutgoingNotification<PublishDiagnosticsParams> publishDiagnostics;
+
   /// Used to indicate that the 'shutdown' request was received from the
   /// Language Server client.
   bool shutdownRequestReceived = false;
@@ -99,11 +103,26 @@ void LSPServer::Impl::onShutdown(const NoParams &,
 
 void LSPServer::Impl::onDocumentDidOpen(
     const DidOpenTextDocumentParams &params) {
-  server.addOrUpdateDocument(params.textDocument.uri, params.textDocument.text);
+  PublishDiagnosticsParams diagParams(params.textDocument.uri,
+                                      params.textDocument.version);
+  server.addOrUpdateDocument(params.textDocument.uri, params.textDocument.text,
+                             params.textDocument.version,
+                             diagParams.diagnostics);
+
+  // Publish any recorded diagnostics.
+  publishDiagnostics(diagParams);
 }
 void LSPServer::Impl::onDocumentDidClose(
     const DidCloseTextDocumentParams &params) {
-  server.removeDocument(params.textDocument.uri);
+  Optional<int64_t> version = server.removeDocument(params.textDocument.uri);
+  if (!version)
+    return;
+
+  // Empty out the diagnostics shown for this document. This will clear out
+  // anything currently displayed by the client for this document (e.g. in the
+  // "Problems" pane of VSCode).
+  publishDiagnostics(
+      PublishDiagnosticsParams(params.textDocument.uri, *version));
 }
 void LSPServer::Impl::onDocumentDidChange(
     const DidChangeTextDocumentParams &params) {
@@ -111,8 +130,14 @@ void LSPServer::Impl::onDocumentDidChange(
   // to avoid this.
   if (params.contentChanges.size() != 1)
     return;
-  server.addOrUpdateDocument(params.textDocument.uri,
-                             params.contentChanges.front().text);
+  PublishDiagnosticsParams diagParams(params.textDocument.uri,
+                                      params.textDocument.version);
+  server.addOrUpdateDocument(
+      params.textDocument.uri, params.contentChanges.front().text,
+      params.textDocument.version, diagParams.diagnostics);
+
+  // Publish any recorded diagnostics.
+  publishDiagnostics(diagParams);
 }
 
 //===----------------------------------------------------------------------===//
@@ -172,6 +197,11 @@ LogicalResult LSPServer::run() {
 
   // Hover
   messageHandler.method("textDocument/hover", impl.get(), &Impl::onHover);
+
+  // Diagnostics
+  impl->publishDiagnostics =
+      messageHandler.outgoingNotification<PublishDiagnosticsParams>(
+          "textDocument/publishDiagnostics");
 
   // Run the main loop of the transport.
   LogicalResult result = success();

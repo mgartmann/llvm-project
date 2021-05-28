@@ -72,6 +72,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Transforms/Utils/MemoryOpRemark.h"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -97,6 +98,7 @@ INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
 INITIALIZE_PASS_DEPENDENCY(GISelCSEAnalysisWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(StackProtector)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(IRTranslator, DEBUG_TYPE, "IRTranslator LLVM IR -> MI",
                 false, false)
 
@@ -164,6 +166,8 @@ void IRTranslator::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<GISelCSEAnalysisWrapperPass>();
   if (OptLevel != CodeGenOpt::None)
     AU.addRequired<BranchProbabilityInfoWrapperPass>();
+  AU.addRequired<TargetLibraryInfoWrapperPass>();
+  AU.addPreserved<TargetLibraryInfoWrapperPass>();
   getSelectionDAGFallbackAnalysisUsage(AU);
   MachineFunctionPass::getAnalysisUsage(AU);
 }
@@ -1815,6 +1819,14 @@ bool IRTranslator::translateConstrainedFPIntrinsic(
 
 bool IRTranslator::translateKnownIntrinsic(const CallInst &CI, Intrinsic::ID ID,
                                            MachineIRBuilder &MIRBuilder) {
+  if (auto *MI = dyn_cast<AnyMemIntrinsic>(&CI)) {
+    const Function &F = *MI->getParent()->getParent();
+    auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(F);
+    if (MemoryOpRemark::canHandle(MI, TLI)) {
+      MemoryOpRemark R(*ORE, "memsize", *DL, TLI);
+      R.visit(MI);
+    }
+  }
 
   // If this is a simple intrinsic (that is, we just need to add a def of
   // a vreg, and uses for each arg operand, then translate it.
@@ -2244,6 +2256,15 @@ bool IRTranslator::translateCallBase(const CallBase &CB,
     Args.push_back(getOrCreateVRegs(*Arg));
   }
 
+  if (auto *CI = dyn_cast<CallInst>(&CB)) {
+    const Function &F = *CI->getParent()->getParent();
+    auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(F);
+    if (MemoryOpRemark::canHandle(CI, TLI)) {
+      MemoryOpRemark R(*ORE, "memsize", *DL, TLI);
+      R.visit(CI);
+    }
+  }
+
   // We don't set HasCalls on MFI here yet because call lowering may decide to
   // optimize into tail calls. Instead, we defer that to selection where a final
   // scan is done to check if any instructions are calls.
@@ -2412,8 +2433,6 @@ bool IRTranslator::translateInvoke(const User &U,
   const BasicBlock *EHPadBB = I.getSuccessor(1);
 
   const Function *Fn = I.getCalledFunction();
-  if (I.isInlineAsm())
-    return false;
 
   // FIXME: support invoking patchpoint and statepoint intrinsics.
   if (Fn && Fn->isIntrinsic())
@@ -2431,12 +2450,37 @@ bool IRTranslator::translateInvoke(const User &U,
   if (!isa<LandingPadInst>(EHPadBB->getFirstNonPHI()))
     return false;
 
+  bool LowerInlineAsm = false;
+  if (I.isInlineAsm()) {
+    const InlineAsm *IA = cast<InlineAsm>(I.getCalledOperand());
+    if (!IA->canThrow()) {
+      // Fast path without emitting EH_LABELs.
+
+      if (!translateInlineAsm(I, MIRBuilder))
+        return false;
+
+      MachineBasicBlock *InvokeMBB = &MIRBuilder.getMBB(),
+                        *ReturnMBB = &getMBB(*ReturnBB);
+
+      // Update successor info.
+      addSuccessorWithProb(InvokeMBB, ReturnMBB, BranchProbability::getOne());
+
+      MIRBuilder.buildBr(*ReturnMBB);
+      return true;
+    } else {
+      LowerInlineAsm = true;
+    }
+  }
+
   // Emit the actual call, bracketed by EH_LABELs so that the MF knows about
   // the region covered by the try.
   MCSymbol *BeginSymbol = Context.createTempSymbol();
   MIRBuilder.buildInstr(TargetOpcode::EH_LABEL).addSym(BeginSymbol);
 
-  if (!translateCallBase(I, MIRBuilder))
+  if (LowerInlineAsm) {
+    if (!translateInlineAsm(I, MIRBuilder))
+      return false;
+  } else if (!translateCallBase(I, MIRBuilder))
     return false;
 
   MCSymbol *EndSymbol = Context.createTempSymbol();

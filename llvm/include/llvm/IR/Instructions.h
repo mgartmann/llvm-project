@@ -933,13 +933,13 @@ public:
                                    const Twine &NameStr = "",
                                    Instruction *InsertBefore = nullptr) {
     unsigned Values = 1 + unsigned(IdxList.size());
-    if (!PointeeType)
+    if (!PointeeType) {
       PointeeType =
           cast<PointerType>(Ptr->getType()->getScalarType())->getElementType();
-    else
-      assert(
-          PointeeType ==
-          cast<PointerType>(Ptr->getType()->getScalarType())->getElementType());
+    } else {
+      assert(cast<PointerType>(Ptr->getType()->getScalarType())
+                 ->isOpaqueOrPointeeTypeMatches(PointeeType));
+    }
     return new (Values) GetElementPtrInst(PointeeType, Ptr, IdxList, Values,
                                           NameStr, InsertBefore);
   }
@@ -949,13 +949,13 @@ public:
                                    const Twine &NameStr,
                                    BasicBlock *InsertAtEnd) {
     unsigned Values = 1 + unsigned(IdxList.size());
-    if (!PointeeType)
+    if (!PointeeType) {
       PointeeType =
           cast<PointerType>(Ptr->getType()->getScalarType())->getElementType();
-    else
-      assert(
-          PointeeType ==
-          cast<PointerType>(Ptr->getType()->getScalarType())->getElementType());
+    } else {
+      assert(cast<PointerType>(Ptr->getType()->getScalarType())
+                 ->isOpaqueOrPointeeTypeMatches(PointeeType));
+    }
     return new (Values) GetElementPtrInst(PointeeType, Ptr, IdxList, Values,
                                           NameStr, InsertAtEnd);
   }
@@ -5278,6 +5278,15 @@ inline unsigned getLoadStoreAddressSpace(Value *I) {
   if (auto *LI = dyn_cast<LoadInst>(I))
     return LI->getPointerAddressSpace();
   return cast<StoreInst>(I)->getPointerAddressSpace();
+}
+
+/// A helper function that returns the type of a load or store instruction.
+inline Type *getLoadStoreType(Value *I) {
+  assert((isa<LoadInst>(I) || isa<StoreInst>(I)) &&
+         "Expected Load or Store instruction");
+  if (auto *LI = dyn_cast<LoadInst>(I))
+    return LI->getType();
+  return cast<StoreInst>(I)->getValueOperand()->getType();
 }
 
 //===----------------------------------------------------------------------===//

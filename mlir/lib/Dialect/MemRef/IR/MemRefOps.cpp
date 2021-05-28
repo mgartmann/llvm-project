@@ -734,8 +734,8 @@ static Value getResultDimFromShapeInterface(OpBuilder &builder, OpResult result,
   // check if the op implements the first interface method or the second, and
   // get the value to use appropriately.
   SmallVector<Value> reifiedResultShapes;
-  if (succeeded(
-          shapedTypeOp.reifyReturnTypeShapes(builder, reifiedResultShapes))) {
+  if (succeeded(shapedTypeOp.reifyReturnTypeShapes(
+          builder, result.getOwner()->getOperands(), reifiedResultShapes))) {
     if (reifiedResultShapes.size() <= resultNumber)
       return nullptr;
     Value resultShape = reifiedResultShapes[resultNumber];
@@ -942,10 +942,6 @@ LogicalResult DmaStartOp::verify() {
       !llvm::all_of(getTagIndices().getTypes(),
                     [](Type t) { return t.isIndex(); }))
     return emitOpError("expected tag indices to be of index type");
-
-  // DMAs from different memory spaces supported.
-  if (getSrcMemorySpace() == getDstMemorySpace())
-    return emitOpError("DMA should be between different memory spaces");
 
   // Optional stride-related operands must be either both present or both
   // absent.

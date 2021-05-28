@@ -402,6 +402,10 @@ static TargetLibraryInfoImpl *createTLII(llvm::Triple &TargetTriple,
   case CodeGenOptions::SVML:
     TLII->addVectorizableFunctionsFromVecLib(TargetLibraryInfoImpl::SVML);
     break;
+  case CodeGenOptions::Darwin_libsystem_m:
+    TLII->addVectorizableFunctionsFromVecLib(
+        TargetLibraryInfoImpl::DarwinLibSystemM);
+    break;
   default:
     break;
   }
@@ -555,10 +559,11 @@ static bool initTargetOptions(DiagnosticsEngine &Diags,
   Options.UniqueBasicBlockSectionNames =
       CodeGenOpts.UniqueBasicBlockSectionNames;
   Options.StackProtectorGuard =
-      llvm::StringSwitch<llvm::StackProtectorGuards>(CodeGenOpts
-          .StackProtectorGuard)
+      llvm::StringSwitch<llvm::StackProtectorGuards>(
+          CodeGenOpts.StackProtectorGuard)
           .Case("tls", llvm::StackProtectorGuards::TLS)
           .Case("global", llvm::StackProtectorGuards::Global)
+          .Case("sysreg", llvm::StackProtectorGuards::SysReg)
           .Default(llvm::StackProtectorGuards::None);
   Options.StackProtectorGuardOffset = CodeGenOpts.StackProtectorGuardOffset;
   Options.StackProtectorGuardReg = CodeGenOpts.StackProtectorGuardReg;
@@ -567,6 +572,7 @@ static bool initTargetOptions(DiagnosticsEngine &Diags,
   Options.ExplicitEmulatedTLS = CodeGenOpts.ExplicitEmulatedTLS;
   Options.DebuggerTuning = CodeGenOpts.getDebuggerTuning();
   Options.EmitStackSizeSection = CodeGenOpts.StackSizeSection;
+  Options.StackUsageOutput = CodeGenOpts.StackUsageOutput;
   Options.EmitAddrsig = CodeGenOpts.Addrsig;
   Options.ForceDwarfFrameSection = CodeGenOpts.ForceDwarfFrameSection;
   Options.EmitCallSiteInfo = CodeGenOpts.EmitCallSiteInfo;
@@ -598,6 +604,7 @@ static bool initTargetOptions(DiagnosticsEngine &Diags,
           Entry.IgnoreSysRoot ? Entry.Path : HSOpts.Sysroot + Entry.Path);
   Options.MCOptions.Argv0 = CodeGenOpts.Argv0;
   Options.MCOptions.CommandLineArgs = CodeGenOpts.CommandLineArgs;
+  Options.DebugStrictDwarf = CodeGenOpts.DebugStrictDwarf;
 
   return true;
 }
@@ -866,10 +873,6 @@ static void setCommandLineOpts(const CodeGenOptions &CodeGenOpts) {
   if (!CodeGenOpts.DebugPass.empty()) {
     BackendArgs.push_back("-debug-pass");
     BackendArgs.push_back(CodeGenOpts.DebugPass.c_str());
-    // New PM supports structure dumping. Old PM is still used for codegen,
-    // so we need to pass both options.
-    if (!CodeGenOpts.LegacyPassManager && CodeGenOpts.DebugPass == "Structure")
-      BackendArgs.push_back("-debug-pass-structure");
   }
   if (!CodeGenOpts.LimitFloatPrecision.empty()) {
     BackendArgs.push_back("-limit-float-precision");
@@ -1277,8 +1280,14 @@ void EmitAssemblyHelper::EmitAssemblyWithNewPassManager(
   CGSCCAnalysisManager CGAM;
   ModuleAnalysisManager MAM;
 
+  bool DebugPassStructure = CodeGenOpts.DebugPass == "Structure";
   PassInstrumentationCallbacks PIC;
-  StandardInstrumentations SI(CodeGenOpts.DebugPassManager);
+  PrintPassOptions PrintPassOpts;
+  PrintPassOpts.Indent = DebugPassStructure;
+  PrintPassOpts.SkipAnalyses = DebugPassStructure;
+  StandardInstrumentations SI(CodeGenOpts.DebugPassManager ||
+                                  DebugPassStructure,
+                              /*VerifyEach*/ false, PrintPassOpts);
   SI.registerCallbacks(PIC, &FAM);
   PassBuilder PB(TM.get(), PTO, PGOOpt, &PIC);
 
