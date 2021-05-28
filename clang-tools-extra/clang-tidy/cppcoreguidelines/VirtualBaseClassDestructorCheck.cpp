@@ -11,6 +11,7 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Lex/Lexer.h"
 #include <string>
+#include <iostream>
 
 using namespace clang::ast_matchers;
 
@@ -97,6 +98,18 @@ generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
   return FixItHint::CreateInsertion(Loc, DestructorString);
 }
 
+static FixItHint
+makePrivateDestructorPublic(const CXXDestructorDecl &Destructor,
+    const SourceManager& SourceManager, const LangOptions &LangOpts) {
+  CharSourceRange DestructorRange =
+      CharSourceRange::getCharRange(Destructor.getSourceRange());
+
+  auto DestructorCode =
+      Lexer::getSourceText(DestructorRange, SourceManager, LangOpts);
+
+  std::cout << "\n\n\n\n" << DestructorCode.str() << "\n\n\n\n";
+}
+
 void VirtualBaseClassDestructorCheck::check(
     const MatchFinder::MatchResult &Result) {
 
@@ -104,12 +117,15 @@ void VirtualBaseClassDestructorCheck::check(
       Result.Nodes.getNodeAs<CXXRecordDecl>("ProblematicClassOrStruct");
 
   const CXXDestructorDecl *Destructor = MatchedClassOrStruct->getDestructor();
+  makePrivateDestructorPublic(*Destructor, *Result.SourceManager,
+                              getLangOpts());
 
   if (Destructor->getAccess() == AS_private) {
     diag(MatchedClassOrStruct->getLocation(),
          "destructor of %0 is private and prevents using the type. Consider "
          "making it public and virtual or protected and non-virtual")
         << MatchedClassOrStruct;
+    //diag(MatchedClassOrStruct->getLocation(), "consider making it public and virtual")
 
     return;
   }
