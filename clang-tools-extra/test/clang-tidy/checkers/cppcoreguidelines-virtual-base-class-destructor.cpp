@@ -22,7 +22,7 @@ struct ProtectedVirtualBaseStruct {
 
 protected:
   virtual ~ProtectedVirtualBaseStruct() {}
-  // CHECK-FIXES: ~ProtectedVirtualBaseStruct(){}
+  // CHECK-FIXES: ~ProtectedVirtualBaseStruct() {}
 };
 
 // CHECK-MESSAGES: :[[@LINE+2]]:8: warning: destructor of 'ProtectedVirtualDefaultBaseStruct' is protected and virtual [cppcoreguidelines-virtual-base-class-destructor]
@@ -51,7 +51,7 @@ private:
 struct PublicNonVirtualBaseStruct {
   virtual void f();
   ~PublicNonVirtualBaseStruct() {}
-  // CHECK-FIXES: virtual ~PublicNonVirtualBaseStruct(){}
+  // CHECK-FIXES: virtual ~PublicNonVirtualBaseStruct() {}
 };
 
 struct PublicNonVirtualNonBaseStruct { // OK according to C.35, since this struct does not have any virtual methods.
@@ -107,7 +107,7 @@ class ProtectedVirtualBaseClass {
 
 protected:
   virtual ~ProtectedVirtualBaseClass() {}
-  // CHECK-FIXES: ~ProtectedVirtualBaseClass(){}
+  // CHECK-FIXES: ~ProtectedVirtualBaseClass() {}
 };
 
 // CHECK-MESSAGES: :[[@LINE+5]]:7: warning: destructor of 'PublicImplicitNonVirtualBaseClass' is public and non-virtual [cppcoreguidelines-virtual-base-class-destructor]
@@ -139,14 +139,14 @@ class PublicNonVirtualBaseClass {
 
 public:
   ~PublicNonVirtualBaseClass() {}
-  // CHECK-FIXES: virtual ~PublicNonVirtualBaseClass(){}
+  // CHECK-FIXES: virtual ~PublicNonVirtualBaseClass() {}
 };
 
 class PublicNonVirtualNonBaseClass { // OK accoring to C.35, since this class does not have any virtual methods.
   void f();
 
 public:
-  ~PublicNonVirtualNonBaseClass(){};
+  ~PublicNonVirtualNonBaseClass() {};
 };
 
 class ProtectedNonVirtualClass { // OK
