@@ -7,20 +7,21 @@
 struct PrivateVirtualBaseStruct {
   virtual void f();
 private:
-  virtual ~PrivateVirtualBaseStruct(){}
+  virtual ~PrivateVirtualBaseStruct() {}
 };
 
 struct PublicVirtualBaseStruct { // OK
   virtual void f();
-  virtual ~PublicVirtualBaseStruct(){}
+  virtual ~PublicVirtualBaseStruct() {}
 };
 
 // CHECK-MESSAGES: :[[@LINE+2]]:8: warning: destructor of 'ProtectedVirtualBaseStruct' is protected and virtual [cppcoreguidelines-virtual-base-class-destructor]
 // CHECK-MESSAGES: :[[@LINE+1]]:8: note: make it protected and non-virtual
 struct ProtectedVirtualBaseStruct {
   virtual void f();
+
 protected:
-  virtual ~ProtectedVirtualBaseStruct(){}
+  virtual ~ProtectedVirtualBaseStruct() {}
   // CHECK-FIXES: ~ProtectedVirtualBaseStruct(){}
 };
 
@@ -28,6 +29,7 @@ protected:
 // CHECK-MESSAGES: :[[@LINE+1]]:8: note: make it protected and non-virtual
 struct ProtectedVirtualDefaultBaseStruct {
   virtual void f();
+
 protected:
   virtual ~ProtectedVirtualDefaultBaseStruct() = default;
   // CHECK-FIXES: ~ProtectedVirtualDefaultBaseStruct() = default;
@@ -40,20 +42,20 @@ protected:
 struct PrivateNonVirtualBaseStruct {
   virtual void f();
 private:
-  ~PrivateNonVirtualBaseStruct(){}
+  ~PrivateNonVirtualBaseStruct() {}
 };
 
 // CHECK-MESSAGES: :[[@LINE+2]]:8: warning: destructor of 'PublicNonVirtualBaseStruct' is public and non-virtual [cppcoreguidelines-virtual-base-class-destructor]
 // CHECK-MESSAGES: :[[@LINE+1]]:8: note: make it public and virtual
 struct PublicNonVirtualBaseStruct {
   virtual void f();
-  ~PublicNonVirtualBaseStruct(){}
+  ~PublicNonVirtualBaseStruct() {}
   // CHECK-FIXES: virtual ~PublicNonVirtualBaseStruct(){}
 };
 
 struct PublicNonVirtualNonBaseStruct { // OK according to C.35, since this struct does not have any virtual methods.
   void f();
-  ~PublicNonVirtualNonBaseStruct(){}
+  ~PublicNonVirtualNonBaseStruct() {}
 };
 
 // CHECK-MESSAGES: :[[@LINE+4]]:8: warning: destructor of 'PublicImplicitNonVirtualBaseStruct' is public and non-virtual [cppcoreguidelines-virtual-base-class-destructor]
@@ -78,7 +80,7 @@ struct ProtectedNonVirtualBaseStruct { // OK
   virtual void f();
 
 protected:
-  ~ProtectedNonVirtualBaseStruct(){}
+  ~ProtectedNonVirtualBaseStruct() {}
 };
 
 // CHECK-MESSAGES: :[[@LINE+4]]:7: warning: destructor of 'PrivateVirtualBaseClass' is private and prevents using the type [cppcoreguidelines-virtual-base-class-destructor]
@@ -87,14 +89,14 @@ protected:
 // As we have 2 conflicting fixes in notes, no fix is applied.
 class PrivateVirtualBaseClass {
   virtual void f();
-  virtual ~PrivateVirtualBaseClass(){}
+  virtual ~PrivateVirtualBaseClass() {}
 };
 
 class PublicVirtualBaseClass { // OK
   virtual void f();
 
 public:
-  virtual ~PublicVirtualBaseClass(){}
+  virtual ~PublicVirtualBaseClass() {}
 };
 
 // CHECK-MESSAGES: :[[@LINE+2]]:7: warning: destructor of 'ProtectedVirtualBaseClass' is protected and virtual [cppcoreguidelines-virtual-base-class-destructor]
@@ -103,7 +105,7 @@ class ProtectedVirtualBaseClass {
   virtual void f();
 
 protected:
-  virtual ~ProtectedVirtualBaseClass(){}
+  virtual ~ProtectedVirtualBaseClass() {}
   // CHECK-FIXES: ~ProtectedVirtualBaseClass(){}
 };
 
@@ -135,7 +137,7 @@ class PublicNonVirtualBaseClass {
   virtual void f();
 
 public:
-  ~PublicNonVirtualBaseClass(){}
+  ~PublicNonVirtualBaseClass() {}
   // CHECK-FIXES: virtual ~PublicNonVirtualBaseClass(){}
 };
 
@@ -151,7 +153,7 @@ public:
   virtual void f();
 
 protected:
-  ~ProtectedNonVirtualClass(){}
+  ~ProtectedNonVirtualClass() {}
 };
 
 // CHECK-MESSAGES: :[[@LINE+7]]:7: warning: destructor of 'OverridingDerivedClass' is public and non-virtual [cppcoreguidelines-virtual-base-class-destructor]
