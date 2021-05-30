@@ -106,7 +106,7 @@ static std::string getSourceText(const CXXDestructorDecl &Destructor) {
 };
 
 static std::string eraseKeyword(std::string &DestructorString,
-                         const std::string &Keyword) {
+                                const std::string &Keyword) {
   size_t KeywordIndex = DestructorString.find(Keyword);
   if (KeywordIndex != std::string::npos)
     DestructorString.erase(KeywordIndex, Keyword.length());

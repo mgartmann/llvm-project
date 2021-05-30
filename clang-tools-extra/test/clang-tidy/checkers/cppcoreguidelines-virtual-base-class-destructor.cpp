@@ -41,6 +41,7 @@ protected:
 // As we have 2 conflicting fixes in notes, no fix is applied.
 struct PrivateNonVirtualBaseStruct {
   virtual void f();
+
 private:
   ~PrivateNonVirtualBaseStruct() {}
 };
