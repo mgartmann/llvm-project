@@ -7,11 +7,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "VirtualBaseClassDestructorCheck.h"
+#include "../utils/LexerUtils.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Lex/Lexer.h"
 #include <string>
-#include <iostream>
 
 using namespace clang::ast_matchers;
 
@@ -98,16 +98,63 @@ generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
   return FixItHint::CreateInsertion(Loc, DestructorString);
 }
 
-static FixItHint
-makePrivateDestructorPublic(const CXXDestructorDecl &Destructor,
-    const SourceManager& SourceManager, const LangOptions &LangOpts) {
-  CharSourceRange DestructorRange =
-      CharSourceRange::getCharRange(Destructor.getSourceRange());
+static std::string getSourceText(const CXXDestructorDecl &Destructor) {
+  std::string SourceText;
+  llvm::raw_string_ostream DestructorStream(SourceText);
+  Destructor.print(DestructorStream);
+  return SourceText;
+};
 
-  auto DestructorCode =
-      Lexer::getSourceText(DestructorRange, SourceManager, LangOpts);
+std::string eraseKeyword(std::string &DestructorString,
+                         const std::string &Keyword) {
+  size_t KeywordIndex = DestructorString.find(Keyword);
+  if (KeywordIndex != std::string::npos)
+    DestructorString.erase(KeywordIndex, Keyword.length());
+  return DestructorString;
+}
 
-  std::cout << "\n\n\n\n" << DestructorCode.str() << "\n\n\n\n";
+static FixItHint changePrivateDestructorVisibilityTo(
+    const std::string &Visibility, const CXXDestructorDecl &Destructor,
+    const SourceManager &SM, const LangOptions &LangOpts) {
+  std::string DestructorString =
+      std::string()
+          .append(Visibility)
+          .append(":\n")
+          .append(Visibility == "public" && !Destructor.isVirtual() ? "virtual "
+                                                                    : "");
+  std::string OriginalDestructor = getSourceText(Destructor);
+
+  DestructorString.append(OriginalDestructor)
+      .append(Destructor.isExplicitlyDefaulted() ? ";\n" : "")
+      .append("private:");
+
+  /// For protected destructors, their virtual keyword needs to be removed if
+  /// present.
+  SourceLocation BeginLocation;
+  if (Visibility == "protected" && Destructor.isVirtualAsWritten()) {
+    DestructorString = eraseKeyword(DestructorString, "virtual ");
+    BeginLocation = utils::lexer::findPreviousTokenStart(
+        Destructor.getBeginLoc(), SM, LangOpts);
+  } else {
+    BeginLocation = Destructor.getBeginLoc();
+  }
+
+  /// Semicolons ending an explicitly defaulted destructor have to be deleted.
+  /// Otherwise, the left-over semicolon trails the \c private: access
+  /// specifier.
+  SourceLocation EndLocation;
+  if (Destructor.isExplicitlyDefaulted()) {
+    EndLocation =
+        utils::lexer::findNextTerminator(Destructor.getEndLoc(), SM, LangOpts)
+            .getLocWithOffset(1);
+  } else {
+    EndLocation = Destructor.getEndLoc().getLocWithOffset(1);
+  }
+
+  auto OriginalDestructorRange =
+      CharSourceRange::getCharRange(BeginLocation, EndLocation);
+  return FixItHint::CreateReplacement(OriginalDestructorRange,
+                                      DestructorString);
 }
 
 void VirtualBaseClassDestructorCheck::check(
@@ -117,15 +164,19 @@ void VirtualBaseClassDestructorCheck::check(
       Result.Nodes.getNodeAs<CXXRecordDecl>("ProblematicClassOrStruct");
 
   const CXXDestructorDecl *Destructor = MatchedClassOrStruct->getDestructor();
-  makePrivateDestructorPublic(*Destructor, *Result.SourceManager,
-                              getLangOpts());
 
   if (Destructor->getAccess() == AS_private) {
     diag(MatchedClassOrStruct->getLocation(),
-         "destructor of %0 is private and prevents using the type. Consider "
-         "making it public and virtual or protected and non-virtual")
+         "destructor of %0 is private and prevents using the type")
         << MatchedClassOrStruct;
-    //diag(MatchedClassOrStruct->getLocation(), "consider making it public and virtual")
+    diag(MatchedClassOrStruct->getLocation(),
+         /*FixDescription=*/"make it public and virtual", DiagnosticIDs::Note)
+        << changePrivateDestructorVisibilityTo(
+               "public", *Destructor, *Result.SourceManager, getLangOpts());
+    diag(MatchedClassOrStruct->getLocation(),
+         /*FixDescription=*/"make it protected", DiagnosticIDs::Note)
+        << changePrivateDestructorVisibilityTo(
+               "protected", *Destructor, *Result.SourceManager, getLangOpts());
 
     return;
   }
@@ -149,9 +200,12 @@ void VirtualBaseClassDestructorCheck::check(
 
   diag(MatchedClassOrStruct->getLocation(),
        "destructor of %0 is %select{public and non-virtual|protected and "
-       "virtual}1. It should either be public and virtual or protected and "
-       "non-virtual")
-      << MatchedClassOrStruct << ProtectedVirtual << Fix;
+       "virtual}1")
+      << MatchedClassOrStruct << ProtectedVirtual;
+  diag(MatchedClassOrStruct->getLocation(),
+       "make it %select{public and virtual|protected and non-virtual}0",
+       DiagnosticIDs::Note)
+      << ProtectedVirtual << Fix;
 }
 
 } // namespace cppcoreguidelines
