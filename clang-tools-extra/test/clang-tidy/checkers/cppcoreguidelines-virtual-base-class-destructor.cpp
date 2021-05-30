@@ -146,7 +146,7 @@ class PublicNonVirtualNonBaseClass { // OK accoring to C.35, since this class do
   void f();
 
 public:
-  ~PublicNonVirtualNonBaseClass() {};
+  ~PublicNonVirtualNonBaseClass() {}
 };
 
 class ProtectedNonVirtualClass { // OK
