@@ -103,7 +103,7 @@ static std::string getSourceText(const CXXDestructorDecl &Destructor) {
   llvm::raw_string_ostream DestructorStream(SourceText);
   Destructor.print(DestructorStream);
   return SourceText;
-};
+}
 
 static std::string eraseKeyword(std::string &DestructorString,
                                 const std::string &Keyword) {
