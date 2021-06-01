@@ -1,7 +1,4 @@
-// RUN: %check_clang_tidy -check-suffix=DEFAULT %s \
-// RUN: google-explicit-constructor %t -- \
-// RUN: -config='{CheckOptions: [ \
-// RUN: ]}'
+// RUN: %check_clang_tidy -check-suffix=DEFAULT %s google-explicit-constructor %t
 
 // RUN: %check_clang_tidy -check-suffix=IGNORED %s \
 // RUN: google-explicit-constructor %t -- \
