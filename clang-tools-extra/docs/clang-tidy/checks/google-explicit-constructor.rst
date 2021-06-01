@@ -73,3 +73,7 @@ Options
     ignored and will not trigger a warning. The list to ignore conversion
     operator `operator B()` in class ``A`` would look as follows:
     ``"A::operator B"``. The default list is empty.
+
+This check implements `C.46 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c46-by-default-declare-single-argument-constructors-explicit>`_
+and `C.164 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c164-avoid-implicit-conversion-operators>`_
+from the CppCoreGuidelines.
