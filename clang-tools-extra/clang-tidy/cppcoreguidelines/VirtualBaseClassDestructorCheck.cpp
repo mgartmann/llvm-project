@@ -123,21 +123,13 @@ static FixItHint changePrivateDestructorVisibilityTo(
           .append(Visibility == "public" && !Destructor.isVirtual() ? "virtual "
                                                                     : "");
   std::string OriginalDestructor = getSourceText(Destructor);
+  if (Visibility == "protected" && Destructor.isVirtualAsWritten()) {
+    OriginalDestructor = eraseKeyword(OriginalDestructor, "virtual ");
+  }
 
   DestructorString.append(OriginalDestructor)
       .append(Destructor.isExplicitlyDefaulted() ? ";\n" : "")
       .append("private:");
-
-  /// For protected destructors, their virtual keyword needs to be removed if
-  /// present.
-  SourceLocation BeginLocation;
-  if (Visibility == "protected" && Destructor.isVirtualAsWritten()) {
-    DestructorString = eraseKeyword(DestructorString, "virtual ");
-    BeginLocation = utils::lexer::findPreviousTokenStart(
-        Destructor.getBeginLoc(), SM, LangOpts);
-  } else {
-    BeginLocation = Destructor.getBeginLoc();
-  }
 
   /// Semicolons ending an explicitly defaulted destructor have to be deleted.
   /// Otherwise, the left-over semicolon trails the \c private: access
@@ -152,7 +144,7 @@ static FixItHint changePrivateDestructorVisibilityTo(
   }
 
   auto OriginalDestructorRange =
-      CharSourceRange::getCharRange(BeginLocation, EndLocation);
+      CharSourceRange::getCharRange(Destructor.getBeginLoc(), EndLocation);
   return FixItHint::CreateReplacement(OriginalDestructorRange,
                                       DestructorString);
 }
