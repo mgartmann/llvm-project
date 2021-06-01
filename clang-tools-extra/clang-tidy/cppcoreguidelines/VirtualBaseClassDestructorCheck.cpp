@@ -48,10 +48,7 @@ getVirtualKeywordRange(const CXXDestructorDecl &Destructor,
           .getValue()
           .getLocation();
 
-  CharSourceRange Range = CharSourceRange{};
-  Range.setBegin(VirtualBeginLoc);
-  Range.setEnd(StartOfNextToken);
-  return Range;
+  return CharSourceRange::getCharRange(VirtualBeginLoc, StartOfNextToken);
 }
 
 static const AccessSpecDecl *
