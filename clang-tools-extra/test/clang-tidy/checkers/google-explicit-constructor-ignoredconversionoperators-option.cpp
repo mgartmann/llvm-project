@@ -3,9 +3,10 @@
 // RUN: %check_clang_tidy -check-suffix=IGNORED %s \
 // RUN: google-explicit-constructor %t -- \
 // RUN: -config='{CheckOptions: [ \
-// RUN:   {key: google-explicit-constructor.IgnoredConversionOperators, value: "A::operator bool;B::operator double;B::operator A"} \
+// RUN:   {key: google-explicit-constructor.IgnoredConversionOperators, value: "Foo::A::operator bool;B::operator double;B::operator A"} \
 // RUN: ]}'
 
+namespace Foo{
 struct A {
   A() {}
   A(int x, int y) {}
@@ -29,7 +30,9 @@ struct A {
 };
 
 inline A::A(int x1) {}
+} // namespace Foo
 
+using Foo::A;
 struct B {
   B() {}
   B(int x, int y) {}

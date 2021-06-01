@@ -62,7 +62,7 @@ Options
 
     Non-explicit single-argument constructors in this semicolon-separated list
     will be ignored and will not trigger a warning. To ignore constructors of a
-    class ``A``, the list would look as follows: ``"A"``. The default list is
+    class ``A``, the list would look as follows: ``A``. The default list is
     empty. This option is used by this check's
     `cppcoreguidelines-explicit-constructor-and-conversion <cppcoreguidelines-explicit-constructor-and-conversion.html>`_
     alias to comply with the CppCoreGuidelines.
@@ -72,7 +72,10 @@ Options
     Non-explicit conversion operators in this semicolon-separated list will be
     ignored and will not trigger a warning. The list to ignore conversion
     operator `operator B()` in class ``A`` would look as follows:
-    ``"A::operator B"``. The default list is empty.
+    ``A::operator B``. If an operator's class resides in any namespace,
+    its namespace has to be specified as well. If class ``A`` resides in a
+    namespace ``Foo``, its ``operator B()`` would be ignored as follows:
+    ``Foo::A::operator B()``. The default list is empty.
 
 This check implements `C.46 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c46-by-default-declare-single-argument-constructors-explicit>`_
 and `C.164 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c164-avoid-implicit-conversion-operators>`_

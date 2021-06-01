@@ -12,6 +12,7 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
+#include <iostream>
 
 using namespace clang::ast_matchers;
 
@@ -25,13 +26,15 @@ auto isIgnoredCtor(const std::vector<std::string> &Names) {
 
 AST_MATCHER_P(CXXConversionDecl, isIgnoredConversionOperator,
               std::vector<std::string>, IgnoredConversionOps) {
-  std::string FullOperatorName =
-      Node.getParent()->getNameAsString().append("::").append(
-          Node.getNameAsString());
+  std::string FQN;
+  llvm::raw_string_ostream FQNStream(FQN);
+  Node.printQualifiedName(FQNStream);
+
+  std::cout << "\n\n" << FQN;
 
   return llvm::any_of(IgnoredConversionOps,
-                      [FullOperatorName](const std::string &NameInOptions) {
-                        return NameInOptions == FullOperatorName;
+                      [FQN](const std::string &NameInOptions) {
+                        return NameInOptions == FQN;
                       });
 }
 } // namespace
