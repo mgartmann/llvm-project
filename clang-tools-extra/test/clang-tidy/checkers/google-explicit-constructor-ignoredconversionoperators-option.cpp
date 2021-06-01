@@ -6,7 +6,7 @@
 // RUN:   {key: google-explicit-constructor.IgnoredConversionOperators, value: "Foo::A::operator bool;B::operator double;B::operator A"} \
 // RUN: ]}'
 
-namespace Foo{
+namespace Foo {
 struct A {
   A() {}
   A(int x, int y) {}

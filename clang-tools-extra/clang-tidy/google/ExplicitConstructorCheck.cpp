@@ -32,10 +32,9 @@ AST_MATCHER_P(CXXConversionDecl, isIgnoredConversionOperator,
 
   std::cout << "\n\n" << FQN;
 
-  return llvm::any_of(IgnoredConversionOps,
-                      [FQN](const std::string &NameInOptions) {
-                        return NameInOptions == FQN;
-                      });
+  return llvm::any_of(
+      IgnoredConversionOps,
+      [FQN](const std::string &NameInOptions) { return NameInOptions == FQN; });
 }
 } // namespace
 
