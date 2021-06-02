@@ -26,16 +26,30 @@ auto isIgnoredCtor(const std::vector<std::string> &Names) {
 
 AST_MATCHER_P(CXXConversionDecl, isIgnoredConversionOperator,
               std::vector<std::string>, IgnoredConversionOps) {
-  std::string FQN;
-  llvm::raw_string_ostream FQNStream(FQN);
+  std::string QualifiedName;
+  llvm::raw_string_ostream FQNStream(QualifiedName);
   Node.printQualifiedName(FQNStream);
 
-  std::cout << "\n\n" << FQN;
+  if (Node.isTemplated()) {
+    std::string TemplateParamName;
+    llvm::raw_string_ostream ParamStream(TemplateParamName);
+    Node.getDescribedFunctionTemplate()
+        ->getTemplateParameters()
+        ->getParam(0)
+        ->printQualifiedName(ParamStream);
+    const std::string OperatorName = "type-parameter-0-0";
+    size_t OperatorNameStart = QualifiedName.find(OperatorName);
+    if (OperatorNameStart != std::string::npos)
+      QualifiedName.replace(OperatorNameStart, OperatorName.length(),
+                            TemplateParamName);
+  }
 
-  return llvm::any_of(
-      IgnoredConversionOps,
-      [FQN](const std::string &NameInOptions) { return NameInOptions == FQN; });
+  return llvm::any_of(Result.Nodes.getNo IgnoredConversionOps,
+                      [QualifiedName](const std::string &NameInOptions) {
+                        return NameInOptions == QualifiedName;
+                      });
 }
+
 } // namespace
 
 void ExplicitConstructorCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
@@ -116,7 +130,7 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
       "%0 must be marked explicit to avoid unintentional implicit conversions";
 
   if (const auto *Conversion =
-      Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
+          Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
     if (Conversion->isOutOfLine())
       return;
     SourceLocation Loc = Conversion->getLocation();
