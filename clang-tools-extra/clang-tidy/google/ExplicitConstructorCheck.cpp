@@ -30,21 +30,7 @@ AST_MATCHER_P(CXXConversionDecl, isIgnoredConversionOperator,
   llvm::raw_string_ostream FQNStream(QualifiedName);
   Node.printQualifiedName(FQNStream);
 
-  if (Node.isTemplated()) {
-    std::string TemplateParamName;
-    llvm::raw_string_ostream ParamStream(TemplateParamName);
-    Node.getDescribedFunctionTemplate()
-        ->getTemplateParameters()
-        ->getParam(0)
-        ->printQualifiedName(ParamStream);
-    const std::string OperatorName = "type-parameter-0-0";
-    size_t OperatorNameStart = QualifiedName.find(OperatorName);
-    if (OperatorNameStart != std::string::npos)
-      QualifiedName.replace(OperatorNameStart, OperatorName.length(),
-                            TemplateParamName);
-  }
-
-  return llvm::any_of(Result.Nodes.getNo IgnoredConversionOps,
+  return llvm::any_of(IgnoredConversionOps,
                       [QualifiedName](const std::string &NameInOptions) {
                         return NameInOptions == QualifiedName;
                       });

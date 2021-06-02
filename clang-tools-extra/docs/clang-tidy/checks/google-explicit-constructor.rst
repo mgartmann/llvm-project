@@ -70,12 +70,24 @@ Options
 .. option:: IgnoredConversionOperators
 
     Non-explicit conversion operators in this semicolon-separated list will be
-    ignored and will not trigger a warning. The list to ignore conversion
+    ignored and will not trigger a warning. The list to ignore a conversion
     operator `operator B()` in class ``A`` would look as follows:
     ``A::operator B``. If an operator's class resides in any namespace,
     its namespace has to be specified as well. If class ``A`` resides in a
     namespace ``Foo``, its ``operator B()`` would be ignored as follows:
-    ``Foo::A::operator B()``. The default list is empty.
+    ``Foo::A::operator B()``. Templated operators have to be ignored by their
+    template parameter name displayed in this check's warning:
+
+.. code-block:: c++
+
+  struct A {
+    template <typename Ty>
+    operator Ty() const;
+    // warning: 'operator type-parameter-0-1' must be marked explicit ...
+    ...
+
+    In the above example, ``operator Ty`` is ignored as follows: 
+    ``Foo::A::operator type-parameter-0-0``. The default list is empty.
 
 This check implements `C.46 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c46-by-default-declare-single-argument-constructors-explicit>`_
 and `C.164 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c164-avoid-implicit-conversion-operators>`_

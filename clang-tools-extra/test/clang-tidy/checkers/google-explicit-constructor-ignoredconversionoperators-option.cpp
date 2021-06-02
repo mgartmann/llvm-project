@@ -3,7 +3,7 @@
 // RUN: %check_clang_tidy -check-suffix=IGNORED %s \
 // RUN: google-explicit-constructor %t -- \
 // RUN: -config='{CheckOptions: [ \
-// RUN:   {key: google-explicit-constructor.IgnoredConversionOperators, value: "Foo::A::operator bool;B::operator double;B::operator A"} \
+// RUN:   {key: google-explicit-constructor.IgnoredConversionOperators, value: "Foo::A::operator bool;Foo::A::operator type-parameter-0-0;B::operator double;B::operator A"} \
 // RUN: ]}'
 
 namespace Foo {
@@ -27,6 +27,11 @@ struct A {
   // CHECK-MESSAGES-DEFAULT: :[[@LINE-1]]:3: warning: 'operator double' must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]
   // CHECK-MESSAGES-IGNORED: :[[@LINE-2]]:3: warning: 'operator double' must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]
   // CHECK-FIXES: {{^  }}explicit operator double() const;
+
+  template <typename Ty>
+  operator Ty() const;
+  // CHECK-MESSAGES-DEFAULT: :[[@LINE-1]]:3: warning: 'operator type-parameter-0-0' must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]
+  // CHECK-FIXES-DEFAULT: {{^  }}explicit operator Ty() const;
 };
 
 inline A::A(int x1) {}
