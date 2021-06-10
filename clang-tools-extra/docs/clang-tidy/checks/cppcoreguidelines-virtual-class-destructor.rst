@@ -1,11 +1,11 @@
-.. title:: clang-tidy - cppcoreguidelines-virtual-base-class-destructor
+.. title:: clang-tidy - cppcoreguidelines-virtual-class-destructor
 
-cppcoreguidelines-virtual-base-class-destructor
+cppcoreguidelines-virtual-class-destructor
 ===============================================
 
-Finds base classes and structs whose destructor is neither public and virtual
-nor protected and non-virtual. A base class's destructor should be specified in
-one of these ways to prevent undefined behaviour.
+Finds virtual classes and structs whose destructor is neither public and virtual
+nor protected and non-virtual. A virtual class's destructor should be specified
+in one of these ways to prevent undefined behaviour.
 
 Fixes are available for user-declared and implicit destructors that are either
 public and non-virtual or protected and virtual. No fixes are offered for

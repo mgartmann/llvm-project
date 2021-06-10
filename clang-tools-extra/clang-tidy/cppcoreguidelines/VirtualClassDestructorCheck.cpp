@@ -1,4 +1,4 @@
-//===--- VirtualBaseClassDestructorCheck.cpp - clang-tidy -----------------===//
+//===--- VirtualClassDestructorCheck.cpp - clang-tidy -----------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "VirtualBaseClassDestructorCheck.h"
+#include "VirtualClassDestructorCheck.h"
 #include "../utils/LexerUtils.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
@@ -19,7 +19,7 @@ namespace clang {
 namespace tidy {
 namespace cppcoreguidelines {
 
-void VirtualBaseClassDestructorCheck::registerMatchers(MatchFinder *Finder) {
+void VirtualClassDestructorCheck::registerMatchers(MatchFinder *Finder) {
   ast_matchers::internal::Matcher<CXXRecordDecl> InheritsVirtualMethod =
       hasAnyBase(hasType(cxxRecordDecl(has(cxxMethodDecl(isVirtual())))));
 
@@ -146,7 +146,7 @@ static FixItHint changePrivateDestructorVisibilityTo(
                                       DestructorString);
 }
 
-void VirtualBaseClassDestructorCheck::check(
+void VirtualClassDestructorCheck::check(
     const MatchFinder::MatchResult &Result) {
 
   const auto *MatchedClassOrStruct =

@@ -119,10 +119,10 @@ New checks
 
   Finds calls to ``new`` with missing exception handler for ``std::bad_alloc``.
 
-- New :doc:`cppcoreguidelines-virtual-base-class-destructor
-  <clang-tidy/checks/cppcoreguidelines-virtual-base-class-destructor>` check.
+- New :doc:`cppcoreguidelines-virtual-class-destructor
+  <clang-tidy/checks/cppcoreguidelines-virtual-class-destructor>` check.
 
-  Finds base classes whose destructor is neither public and virtual nor 
+  Finds virtual classes whose destructor is neither public and virtual nor 
   protected and non-virtual.
 
 New check aliases

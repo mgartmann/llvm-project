@@ -35,7 +35,7 @@
 #include "ProTypeVarargCheck.h"
 #include "SlicingCheck.h"
 #include "SpecialMemberFunctionsCheck.h"
-#include "VirtualBaseClassDestructorCheck.h"
+#include "VirtualClassDestructorCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -95,8 +95,8 @@ public:
     CheckFactories.registerCheck<SlicingCheck>("cppcoreguidelines-slicing");
     CheckFactories.registerCheck<misc::UnconventionalAssignOperatorCheck>(
         "cppcoreguidelines-c-copy-assignment-signature");
-    CheckFactories.registerCheck<VirtualBaseClassDestructorCheck>(
-        "cppcoreguidelines-virtual-base-class-destructor");
+    CheckFactories.registerCheck<VirtualClassDestructorCheck>(
+        "cppcoreguidelines-virtual-class-destructor");
   }
 
   ClangTidyOptions getModuleOptions() override {
