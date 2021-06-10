@@ -149,8 +149,10 @@ void VirtualClassDestructorCheck::check(
       Result.Nodes.getNodeAs<CXXRecordDecl>("ProblematicClassOrStruct");
 
   const CXXDestructorDecl *Destructor = MatchedClassOrStruct->getDestructor();
+  if (!Destructor)
+    return;
 
-  if (Destructor->getAccess() == AS_private) {
+  if (Destructor->getAccess() == AccessSpecifier::AS_private) {
     diag(MatchedClassOrStruct->getLocation(),
          "destructor of %0 is private and prevents using the type")
         << MatchedClassOrStruct;
@@ -173,7 +175,7 @@ void VirtualClassDestructorCheck::check(
   if (MatchedClassOrStruct->hasUserDeclaredDestructor()) {
     if (Destructor->getAccess() == AccessSpecifier::AS_public) {
       Fix = FixItHint::CreateInsertion(Destructor->getLocation(), "virtual ");
-    } else if (Destructor->getAccess() == AS_protected) {
+    } else if (Destructor->getAccess() == AccessSpecifier::AS_protected) {
       ProtectedAndVirtual = true;
       Fix = FixItHint::CreateRemoval(getVirtualKeywordRange(
           *Destructor, *Result.SourceManager, Result.Context->getLangOpts()));
