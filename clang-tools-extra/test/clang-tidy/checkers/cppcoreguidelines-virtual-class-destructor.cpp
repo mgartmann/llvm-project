@@ -6,6 +6,7 @@
 // As we have 2 conflicting fixes in notes, no fix is applied.
 struct PrivateVirtualBaseStruct {
   virtual void f();
+
 private:
   virtual ~PrivateVirtualBaseStruct() {}
 };
