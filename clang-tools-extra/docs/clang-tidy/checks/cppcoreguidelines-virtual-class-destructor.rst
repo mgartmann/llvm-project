@@ -3,9 +3,11 @@
 cppcoreguidelines-virtual-class-destructor
 ===============================================
 
-Finds virtual classes and structs whose destructor is neither public and virtual
+Finds virtual classes whose destructor is neither public and virtual
 nor protected and non-virtual. A virtual class's destructor should be specified
-in one of these ways to prevent undefined behaviour.
+in one of these ways to prevent undefined behaviour. Note that this check will
+diagnose a class with a virtual method regardless of whether the class is used
+as a base class or not.
 
 Fixes are available for user-declared and implicit destructors that are either
 public and non-virtual or protected and virtual. No fixes are offered for
@@ -24,13 +26,13 @@ violate guideline C.35:
   struct Foo {  // NOK, protected destructor should not be virtual
     virtual void f();
   protected:
-    virtual ~Foo(){};
+    virtual ~Foo(){}
   };
 
   class Bar {    // NOK, public destructor should be virtual
     virtual void f();
   public:
-    ~Bar(){};
+    ~Bar(){}
   };
 
 This would be rewritten to look like this:
@@ -40,13 +42,13 @@ This would be rewritten to look like this:
   struct Foo {  // OK, destructor is not virtual anymore
     virtual void f();
   protected:
-    ~Foo(){};
+    ~Foo(){}
   };
 
   class Bar {    // OK, destructor is now virtual
     virtual void f();
   public:
-    virtual ~Bar(){};
+    virtual ~Bar(){}
   };
 
 This check implements `C.35 <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c35-a-base-class-destructor-should-be-either-public-and-virtual-or-protected-and-non-virtual>`_ from the CppCoreGuidelines.
