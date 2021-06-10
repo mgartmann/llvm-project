@@ -25,7 +25,6 @@ void VirtualClassDestructorCheck::registerMatchers(MatchFinder *Finder) {
 
   Finder->addMatcher(
       cxxRecordDecl(
-          anyOf(isStruct(), isClass()),
           anyOf(has(cxxMethodDecl(isVirtual())), InheritsVirtualMethod),
           unless(anyOf(
               has(cxxDestructorDecl(isPublic(), isVirtual())),
