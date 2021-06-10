@@ -76,7 +76,7 @@ generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
   if (!AccessSpecDecl) {
     if (StructOrClass.isClass()) {
       Loc = StructOrClass.getEndLoc();
-      DestructorString.append("public:");
+      DestructorString = "public:";
       AppendLineBreak = true;
     } else {
       Loc = StructOrClass.getBraceRange().getBegin().getLocWithOffset(1);
@@ -85,11 +85,10 @@ generateUserDeclaredDestructor(const CXXRecordDecl &StructOrClass,
     Loc = AccessSpecDecl->getEndLoc().getLocWithOffset(1);
   }
 
-  DestructorString.append("\n")
-      .append("virtual ~")
-      .append(StructOrClass.getName().str())
-      .append("() = default;")
-      .append(AppendLineBreak ? "\n" : "");
+  DestructorString = (llvm::Twine(DestructorString) + "\nvirtual ~" +
+                      StructOrClass.getName().str() + "() = default;" +
+                      (AppendLineBreak ? "\n" : ""))
+                         .str();
 
   return FixItHint::CreateInsertion(Loc, DestructorString);
 }
@@ -113,31 +112,29 @@ static FixItHint changePrivateDestructorVisibilityTo(
     const std::string &Visibility, const CXXDestructorDecl &Destructor,
     const SourceManager &SM, const LangOptions &LangOpts) {
   std::string DestructorString =
-      std::string()
-          .append(Visibility)
-          .append(":\n")
-          .append(Visibility == "public" && !Destructor.isVirtual() ? "virtual "
-                                                                    : "");
-  std::string OriginalDestructor = getSourceText(Destructor);
-  if (Visibility == "protected" && Destructor.isVirtualAsWritten()) {
-    OriginalDestructor = eraseKeyword(OriginalDestructor, "virtual ");
-  }
+      (llvm::Twine() + Visibility + ":\n" +
+       (Visibility == "public" && !Destructor.isVirtual() ? "virtual " : ""))
+          .str();
 
-  DestructorString.append(OriginalDestructor)
-      .append(Destructor.isExplicitlyDefaulted() ? ";\n" : "")
-      .append("private:");
+  std::string OriginalDestructor = getSourceText(Destructor);
+  if (Visibility == "protected" && Destructor.isVirtualAsWritten())
+    OriginalDestructor = eraseKeyword(OriginalDestructor, "virtual ");
+
+  DestructorString =
+      (llvm::Twine(DestructorString) + OriginalDestructor +
+       (Destructor.isExplicitlyDefaulted() ? ";\n" : "") + "private:")
+          .str();
 
   /// Semicolons ending an explicitly defaulted destructor have to be deleted.
   /// Otherwise, the left-over semicolon trails the \c private: access
   /// specifier.
   SourceLocation EndLocation;
-  if (Destructor.isExplicitlyDefaulted()) {
+  if (Destructor.isExplicitlyDefaulted())
     EndLocation =
         utils::lexer::findNextTerminator(Destructor.getEndLoc(), SM, LangOpts)
             .getLocWithOffset(1);
-  } else {
+  else
     EndLocation = Destructor.getEndLoc().getLocWithOffset(1);
-  }
 
   auto OriginalDestructorRange =
       CharSourceRange::getCharRange(Destructor.getBeginLoc(), EndLocation);
@@ -170,14 +167,14 @@ void VirtualClassDestructorCheck::check(
   }
 
   // Implicit destructors are public and non-virtual for classes and structs.
-  bool ProtectedVirtual = false;
+  bool ProtectedAndVirtual = false;
   FixItHint Fix;
 
   if (MatchedClassOrStruct->hasUserDeclaredDestructor()) {
     if (Destructor->getAccess() == AccessSpecifier::AS_public) {
       Fix = FixItHint::CreateInsertion(Destructor->getLocation(), "virtual ");
     } else if (Destructor->getAccess() == AS_protected) {
-      ProtectedVirtual = true;
+      ProtectedAndVirtual = true;
       Fix = FixItHint::CreateRemoval(getVirtualKeywordRange(
           *Destructor, *Result.SourceManager, Result.Context->getLangOpts()));
     }
@@ -189,11 +186,11 @@ void VirtualClassDestructorCheck::check(
   diag(MatchedClassOrStruct->getLocation(),
        "destructor of %0 is %select{public and non-virtual|protected and "
        "virtual}1")
-      << MatchedClassOrStruct << ProtectedVirtual;
+      << MatchedClassOrStruct << ProtectedAndVirtual;
   diag(MatchedClassOrStruct->getLocation(),
        "make it %select{public and virtual|protected and non-virtual}0",
        DiagnosticIDs::Note)
-      << ProtectedVirtual << Fix;
+      << ProtectedAndVirtual << Fix;
 }
 
 } // namespace cppcoreguidelines
