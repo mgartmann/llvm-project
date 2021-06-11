@@ -108,11 +108,6 @@ New checks
   Finds inner loops that have not been unrolled, as well as fully unrolled
   loops with unknown loops bounds or a large number of iterations.
 
-- New :doc:`cppcoreguidelines-avoid-init-default-constructors
-  <clang-tidy/checks/cppcoreguidelines-avoid-init-default-constructors>` check.
-
-  Finds constructors which should do more than just initialize class members.
-
 - New :doc:`cppcoreguidelines-prefer-member-initializer
   <clang-tidy/checks/cppcoreguidelines-prefer-member-initializer>` check.
 
@@ -123,6 +118,12 @@ New checks
   <clang-tidy/checks/bugprone-unhandled-exception-at-new>` check.
 
   Finds calls to ``new`` with missing exception handler for ``std::bad_alloc``.
+
+- New :doc:`cppcoreguidelines-avoid-init-default-constructors
+  <clang-tidy/checks/cppcoreguidelines-avoid-init-default-constructors>` check.
+
+  Finds constructors which just initialize class members, so they can be
+  replaced with in-class member initializers.
 
 New check aliases
 ^^^^^^^^^^^^^^^^^

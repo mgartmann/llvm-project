@@ -1,5 +1,4 @@
-//===--- AvoidInitDefaultConstructorsCheck.h - clang-tidy *- C++
-//-*-===//
+//===--- AvoidInitDefaultConstructorsCheck.h - clang-tidy -------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -16,14 +15,14 @@ namespace clang {
 namespace tidy {
 namespace cppcoreguidelines {
 
-/// FIXME: Write a short description.
+/// Finds constructors which just initialize class members, so they can be
+/// replaced with in-class member initializers.
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-avoid-default-constructor-with-only-initializers.html
 class AvoidInitDefaultConstructorsCheck : public ClangTidyCheck {
 public:
-  AvoidInitDefaultConstructorsCheck(StringRef Name,
-                                                   ClangTidyContext *Context)
+  AvoidInitDefaultConstructorsCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   bool isLanguageVersionSupported(const LangOptions &LangOpts) const override {
     return LangOpts.CPlusPlus;
