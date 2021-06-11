@@ -46,14 +46,14 @@ class OneInitList {
   int z;
 
   OneInitList() : z{1} {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneInitList' should do more than just initialize member variables [cppcoreguidelines-avoid-init-default-constructors]
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneInitList' can be omitted. Use in-class member initializers instead [cppcoreguidelines-avoid-init-default-constructors]
 };
 
 class OneDirectInit {
   int z;
 
   OneDirectInit() : z(1) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneDirectInit' should do more than just initialize member variables [cppcoreguidelines-avoid-init-default-constructors]
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneDirectInit' can be omitted. Use in-class member initializers instead [cppcoreguidelines-avoid-init-default-constructors]
 };
 
 class OneInitListOneDirectInit {
@@ -62,5 +62,5 @@ class OneInitListOneDirectInit {
   int w;
 
   OneInitListOneDirectInit() : z{1}, y(2) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneInitListOneDirectInit' should do more than just initialize member variables [cppcoreguidelines-avoid-init-default-constructors]
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneInitListOneDirectInit' can be omitted. Use in-class member initializers instead [cppcoreguidelines-avoid-init-default-constructors]
 };

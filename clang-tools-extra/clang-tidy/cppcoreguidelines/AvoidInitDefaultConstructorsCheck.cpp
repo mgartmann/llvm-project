@@ -35,8 +35,8 @@ void AvoidInitDefaultConstructorsCheck::check(
       Result.Nodes.getNodeAs<CXXConstructorDecl>("Constructor");
 
   diag(MatchedConstructor->getLocation(),
-       "Default constructors like %0 should do more than just initialize "
-       "member variables")
+       "Default constructors like %0 can be omitted. Use in-class member "
+       "initializers instead")
       << MatchedConstructor;
 }
 
