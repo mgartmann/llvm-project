@@ -1,4 +1,4 @@
-//===--- AvoidDefaultConstructorWithOnlyInitializersCheck.cpp - clang-tidy
+//===--- AvoidInitDefaultConstructorsCheck.cpp - clang-tidy
 //-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AvoidDefaultConstructorWithOnlyInitializersCheck.h"
+#include "AvoidInitDefaultConstructorsCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
@@ -17,7 +17,7 @@ namespace clang {
 namespace tidy {
 namespace cppcoreguidelines {
 
-void AvoidDefaultConstructorWithOnlyInitializersCheck::registerMatchers(
+void AvoidInitDefaultConstructorsCheck::registerMatchers(
     MatchFinder *Finder) {
   Finder->addMatcher(
       cxxConstructorDecl(
@@ -31,7 +31,7 @@ void AvoidDefaultConstructorWithOnlyInitializersCheck::registerMatchers(
       this);
 }
 
-void AvoidDefaultConstructorWithOnlyInitializersCheck::check(
+void AvoidInitDefaultConstructorsCheck::check(
     const MatchFinder::MatchResult &Result) {
   const auto *MatchedConstructor =
       Result.Nodes.getNodeAs<CXXConstructorDecl>("Constructor");

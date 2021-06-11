@@ -14,8 +14,8 @@
 #include "../modernize/AvoidCArraysCheck.h"
 #include "../modernize/UseOverrideCheck.h"
 #include "../readability/MagicNumbersCheck.h"
-#include "AvoidDefaultConstructorWithOnlyInitializersCheck.h"
 #include "AvoidGotoCheck.h"
+#include "AvoidInitDefaultConstructorsCheck.h"
 #include "AvoidNonConstGlobalVariablesCheck.h"
 #include "InitVariablesCheck.h"
 #include "InterfacesGlobalInitCheck.h"
@@ -47,10 +47,10 @@ public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.registerCheck<modernize::AvoidCArraysCheck>(
         "cppcoreguidelines-avoid-c-arrays");
-    CheckFactories.registerCheck<AvoidDefaultConstructorWithOnlyInitializersCheck>(
-        "cppcoreguidelines-avoid-default-constructor-with-only-initializers");
     CheckFactories.registerCheck<AvoidGotoCheck>(
         "cppcoreguidelines-avoid-goto");
+    CheckFactories.registerCheck<AvoidInitDefaultConstructorsCheck>(
+        "cppcoreguidelines-avoid-init-default-constructors");
     CheckFactories.registerCheck<readability::MagicNumbersCheck>(
         "cppcoreguidelines-avoid-magic-numbers");
     CheckFactories.registerCheck<AvoidNonConstGlobalVariablesCheck>(

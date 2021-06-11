@@ -144,8 +144,8 @@ Clang-Tidy Checks
    `clang-analyzer-valist.Unterminated <clang-analyzer-valist.Unterminated.html>`_,
    `concurrency-mt-unsafe <concurrency-mt-unsafe.html>`_,
    `concurrency-thread-canceltype-asynchronous <concurrency-thread-canceltype-asynchronous.html>`_,
-   `cppcoreguidelines-avoid-default-constructor-with-only-initializers <cppcoreguidelines-avoid-default-constructor-with-only-initializers.html>`_, "Yes"
    `cppcoreguidelines-avoid-goto <cppcoreguidelines-avoid-goto.html>`_,
+   `cppcoreguidelines-avoid-init-default-constructors <cppcoreguidelines-avoid-init-default-constructors.html>`_,
    `cppcoreguidelines-avoid-non-const-global-variables <cppcoreguidelines-avoid-non-const-global-variables.html>`_,
    `cppcoreguidelines-init-variables <cppcoreguidelines-init-variables.html>`_, "Yes"
    `cppcoreguidelines-interfaces-global-init <cppcoreguidelines-interfaces-global-init.html>`_,

@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s cppcoreguidelines-avoid-default-constructor-with-only-initializers %t
+// RUN: %check_clang_tidy %s cppcoreguidelines-avoid-init-default-constructors %t
 
 class NoDefaultCtor {
   int z;
@@ -46,14 +46,14 @@ class OneInitList {
   int z;
 
   OneInitList() : z{1} {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneInitList' should do more than just initialize member variables [cppcoreguidelines-avoid-default-constructor-with-only-initializers]
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneInitList' should do more than just initialize member variables [cppcoreguidelines-avoid-init-default-constructors]
 };
 
 class OneDirectInit {
   int z;
 
   OneDirectInit() : z(1) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneDirectInit' should do more than just initialize member variables [cppcoreguidelines-avoid-default-constructor-with-only-initializers]
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneDirectInit' should do more than just initialize member variables [cppcoreguidelines-avoid-init-default-constructors]
 };
 
 class OneInitListOneDirectInit {
@@ -62,5 +62,5 @@ class OneInitListOneDirectInit {
   int w;
 
   OneInitListOneDirectInit() : z{1}, y(2) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneInitListOneDirectInit' should do more than just initialize member variables [cppcoreguidelines-avoid-default-constructor-with-only-initializers]
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: Default constructors like 'OneInitListOneDirectInit' should do more than just initialize member variables [cppcoreguidelines-avoid-init-default-constructors]
 };

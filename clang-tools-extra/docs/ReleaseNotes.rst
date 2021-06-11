@@ -108,8 +108,8 @@ New checks
   Finds inner loops that have not been unrolled, as well as fully unrolled
   loops with unknown loops bounds or a large number of iterations.
 
-- New :doc:`cppcoreguidelines-avoid-default-constructor-with-only-initializers
-  <clang-tidy/checks/cppcoreguidelines-avoid-default-constructor-with-only-initializers>` check.
+- New :doc:`cppcoreguidelines-avoid-init-default-constructors
+  <clang-tidy/checks/cppcoreguidelines-avoid-init-default-constructors>` check.
 
   Finds constructors which should do more than just initialize class members.
 

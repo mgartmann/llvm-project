@@ -1,4 +1,4 @@
-//===--- AvoidDefaultConstructorWithOnlyInitializersCheck.h - clang-tidy *- C++
+//===--- AvoidInitDefaultConstructorsCheck.h - clang-tidy *- C++
 //-*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CPPCOREGUIDELINES_AVOIDDEFAULTCONSTRUCTORWITHONLYINITIALIZERSCHECK_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CPPCOREGUIDELINES_AVOIDDEFAULTCONSTRUCTORWITHONLYINITIALIZERSCHECK_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CPPCOREGUIDELINES_AVOIDINITDEFAULTCONSTRUCTORSCHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CPPCOREGUIDELINES_AVOIDINITDEFAULTCONSTRUCTORSCHECK_H
 
 #include "../ClangTidyCheck.h"
 
@@ -20,9 +20,9 @@ namespace cppcoreguidelines {
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-avoid-default-constructor-with-only-initializers.html
-class AvoidDefaultConstructorWithOnlyInitializersCheck : public ClangTidyCheck {
+class AvoidInitDefaultConstructorsCheck : public ClangTidyCheck {
 public:
-  AvoidDefaultConstructorWithOnlyInitializersCheck(StringRef Name,
+  AvoidInitDefaultConstructorsCheck(StringRef Name,
                                                    ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   bool isLanguageVersionSupported(const LangOptions &LangOpts) const override {
@@ -36,4 +36,4 @@ public:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CPPCOREGUIDELINES_AVOIDDEFAULTCONSTRUCTORWITHONLYINITIALIZERSCHECK_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CPPCOREGUIDELINES_AVOIDINITDEFAULTCONSTRUCTORSCHECK_H
