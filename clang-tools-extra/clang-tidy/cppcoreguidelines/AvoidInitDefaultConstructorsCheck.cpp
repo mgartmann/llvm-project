@@ -16,8 +16,7 @@ namespace clang {
 namespace tidy {
 namespace cppcoreguidelines {
 
-void AvoidInitDefaultConstructorsCheck::registerMatchers(
-    MatchFinder *Finder) {
+void AvoidInitDefaultConstructorsCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       cxxConstructorDecl(
           hasBody(compoundStmt(unless(hasAnySubstatement(anything())))),
