@@ -111,7 +111,7 @@ New checks
 - New :doc:`cppcoreguidelines-avoid-default-constructor-with-only-initializers
   <clang-tidy/checks/cppcoreguidelines-avoid-default-constructor-with-only-initializers>` check.
 
-  FIXME: add release notes.
+  Finds constructors which should do more than just initialize class members.
 
 - New :doc:`cppcoreguidelines-prefer-member-initializer
   <clang-tidy/checks/cppcoreguidelines-prefer-member-initializer>` check.

@@ -22,7 +22,12 @@ void AvoidDefaultConstructorWithOnlyInitializersCheck::registerMatchers(
   Finder->addMatcher(
       cxxConstructorDecl(
           hasBody(compoundStmt(unless(hasAnySubstatement(anything())))),
-          isDefaultConstructor(), hasAnyConstructorInitializer(anything())).bind("Constructor"),
+          isDefaultConstructor(),
+          unless(hasAnyConstructorInitializer(cxxCtorInitializer(
+              withInitializer(hasDescendant(declRefExpr(to(parmVarDecl()))))))),
+          hasAnyConstructorInitializer(
+              forField(unless(hasInClassInitializer(anything())))))
+          .bind("Constructor"),
       this);
 }
 
@@ -32,7 +37,8 @@ void AvoidDefaultConstructorWithOnlyInitializersCheck::check(
       Result.Nodes.getNodeAs<CXXConstructorDecl>("Constructor");
 
   diag(MatchedConstructor->getLocation(),
-       "The default constructor %0 does only initialize member variables.")
+       "Default constructors like %0 should do more than just initialize "
+       "member variables")
       << MatchedConstructor;
 }
 
