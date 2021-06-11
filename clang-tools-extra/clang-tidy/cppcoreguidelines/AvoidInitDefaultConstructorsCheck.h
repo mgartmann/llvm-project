@@ -19,7 +19,7 @@ namespace cppcoreguidelines {
 /// replaced with in-class member initializers.
 ///
 /// For the user-facing documentation see:
-/// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-avoid-default-constructor-with-only-initializers.html
+/// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-avoid-init-default-constructors.html
 class AvoidInitDefaultConstructorsCheck : public ClangTidyCheck {
 public:
   AvoidInitDefaultConstructorsCheck(StringRef Name, ClangTidyContext *Context)
