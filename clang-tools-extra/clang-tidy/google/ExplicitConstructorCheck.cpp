@@ -12,7 +12,6 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
-#include <iostream>
 
 using namespace clang::ast_matchers;
 
@@ -26,8 +25,6 @@ AST_MATCHER_P(NamedDecl, isIgnored, std::vector<std::string>,
   std::string QualifiedName;
   llvm::raw_string_ostream FQNStream(QualifiedName);
   Node.printQualifiedName(FQNStream);
-
-  std::cout << "\n\n\n" << QualifiedName << "\n\n";
 
   return llvm::any_of(IgnoredCtorsOrOps,
                       [QualifiedName](const std::string &NameInOptions) {
