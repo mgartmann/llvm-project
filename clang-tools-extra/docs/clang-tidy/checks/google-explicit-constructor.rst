@@ -62,8 +62,10 @@ Options
 
     Non-explicit single-argument constructors in this semicolon-separated list
     will be ignored and will not trigger a warning. To ignore constructors of a
-    class ``A``, the list would look as follows: ``A``. The default list is
-    empty. This option is used by this check's
+    class ``A``, the list would look as follows: ``A::A``. If class ``A``
+    resided in a namespace ``Foo``, its constructors have to be ignored as
+    follows: ``Foo::A::A``. The default list is empty. This option is used by
+    this check's
     `cppcoreguidelines-explicit-constructor-and-conversion <cppcoreguidelines-explicit-constructor-and-conversion.html>`_
     alias to comply with the CppCoreGuidelines.
 

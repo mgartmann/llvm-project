@@ -20,17 +20,16 @@ namespace clang {
 namespace tidy {
 namespace google {
 namespace {
-auto isIgnoredCtor(const std::vector<std::string> &Names) {
-  return hasAnyName(std::vector<StringRef>(Names.begin(), Names.end()));
-}
 
-AST_MATCHER_P(CXXConversionDecl, isIgnoredConversionOperator,
-              std::vector<std::string>, IgnoredConversionOps) {
+AST_MATCHER_P(NamedDecl, isIgnored, std::vector<std::string>,
+              IgnoredCtorsOrOps) {
   std::string QualifiedName;
   llvm::raw_string_ostream FQNStream(QualifiedName);
   Node.printQualifiedName(FQNStream);
 
-  return llvm::any_of(IgnoredConversionOps,
+  std::cout << "\n\n\n" << QualifiedName << "\n\n";
+
+  return llvm::any_of(IgnoredCtorsOrOps,
                       [QualifiedName](const std::string &NameInOptions) {
                         return NameInOptions == QualifiedName;
                       });
@@ -50,15 +49,14 @@ void ExplicitConstructorCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       cxxConstructorDecl(unless(anyOf(isImplicit(), // Compiler-generated.
                                       isDeleted(), isInstantiated(),
-                                      isIgnoredCtor(IgnoredConstructors))))
+                                      isIgnored(IgnoredConstructors))))
           .bind("ctor"),
       this);
   Finder->addMatcher(
       cxxConversionDecl(unless(anyOf(isExplicit(), // Already marked explicit.
                                      isImplicit(), // Compiler-generated.
                                      isDeleted(), isInstantiated(),
-                                     isIgnoredConversionOperator(
-                                         IgnoredConversionOperators))))
+                                     isIgnored(IgnoredConversionOperators))))
 
           .bind("conversion"),
       this);
@@ -116,7 +114,7 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
       "%0 must be marked explicit to avoid unintentional implicit conversions";
 
   if (const auto *Conversion =
-      Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
+          Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
     if (Conversion->isOutOfLine())
       return;
     SourceLocation Loc = Conversion->getLocation();
