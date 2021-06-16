@@ -119,6 +119,12 @@ New checks
 
   Finds calls to ``new`` with missing exception handler for ``std::bad_alloc``.
 
+- New :doc:`cppcoreguidelines-avoid-init-default-constructors
+  <clang-tidy/checks/cppcoreguidelines-avoid-init-default-constructors>` check.
+
+  Finds constructors which just initialize class members, so they can be
+  replaced with in-class member initializers.
+
 New check aliases
 ^^^^^^^^^^^^^^^^^
 
