@@ -10,6 +10,7 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CPPCOREGUIDELINES_AVOIDNONCONSTGLOBALVARIABLESCHECK_H
 
 #include "../ClangTidyCheck.h"
+#include <string>
 
 namespace clang {
 namespace tidy {
@@ -21,6 +22,18 @@ namespace cppcoreguidelines {
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-avoid-non-const-global-variables.html
 class AvoidNonConstGlobalVariablesCheck : public ClangTidyCheck {
+  std::string generateReplacementString(
+      const ast_matchers::MatchFinder::MatchResult &Result,
+      const VarDecl &Variablee) const;
+
+  bool hasSpaceAfterType(const ast_matchers::MatchFinder::MatchResult &Result,
+                         const VarDecl &Variable,
+                         const std::string &NonConstType) const;
+
+  CharSourceRange generateReplacementRange(const VarDecl &Variable) const;
+
+  std::string cleanType(const QualType &Type) const;
+
 public:
   AvoidNonConstGlobalVariablesCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}

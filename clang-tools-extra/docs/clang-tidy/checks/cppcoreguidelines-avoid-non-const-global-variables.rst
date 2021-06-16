@@ -36,3 +36,6 @@ Variables: ``a``, ``c``, ``c_ptr1``, ``c_ptr2``, ``c_const_ptr`` and
 ``c_reference``, will all generate warnings since they are either:
 a globally accessible variable and non-const, a pointer or reference providing
 global access to non-const data or both.
+
+The check also provides fixes that make the problematic variables, pointers and 
+references constant.
