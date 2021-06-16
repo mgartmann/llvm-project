@@ -9,6 +9,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "../google/ExplicitConstructorCheck.h"
 #include "../misc/NonPrivateMemberVariablesInClassesCheck.h"
 #include "../misc/UnconventionalAssignOperatorCheck.h"
 #include "../modernize/AvoidCArraysCheck.h"
@@ -61,6 +62,8 @@ public:
         "cppcoreguidelines-avoid-non-const-global-variables");
     CheckFactories.registerCheck<DeclareLoopVariableInTheInitializerCheck>(
         "cppcoreguidelines-declare-loop-variable-in-the-initializer");
+    CheckFactories.registerCheck<google::ExplicitConstructorCheck>(
+        "cppcoreguidelines-explicit-constructor-and-conversion");
     CheckFactories.registerCheck<modernize::UseOverrideCheck>(
         "cppcoreguidelines-explicit-virtual-functions");
     CheckFactories.registerCheck<InitVariablesCheck>(

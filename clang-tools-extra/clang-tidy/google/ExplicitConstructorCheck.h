@@ -10,6 +10,7 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_GOOGLE_EXPLICITCONSTRUCTORCHECK_H
 
 #include "../ClangTidyCheck.h"
+#include "../utils/OptionsUtils.h"
 
 namespace clang {
 namespace tidy {
@@ -24,12 +25,21 @@ namespace google {
 class ExplicitConstructorCheck : public ClangTidyCheck {
 public:
   ExplicitConstructorCheck(StringRef Name, ClangTidyContext *Context)
-      : ClangTidyCheck(Name, Context) {}
+      : ClangTidyCheck(Name, Context),
+        IgnoredConstructors(utils::options::parseStringList(
+            Options.get("IgnoredConstructors", ""))),
+        IgnoredConversionOperators(utils::options::parseStringList(
+            Options.get("IgnoredConversionOperators", ""))) {}
+  void storeOptions(ClangTidyOptions::OptionMap &Opts) override;
   bool isLanguageVersionSupported(const LangOptions &LangOpts) const override {
     return LangOpts.CPlusPlus;
   }
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+
+private:
+  const std::vector<std::string> IgnoredConstructors;
+  const std::vector<std::string> IgnoredConversionOperators;
 };
 
 } // namespace google

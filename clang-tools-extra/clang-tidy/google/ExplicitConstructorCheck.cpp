@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ExplicitConstructorCheck.h"
+#include "../utils/OptionsUtils.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
@@ -17,17 +18,42 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 namespace google {
+namespace {
+
+AST_MATCHER_P(NamedDecl, isIgnored, std::vector<std::string>,
+              IgnoredCtorsOrOps) {
+  std::string QualifiedName;
+  llvm::raw_string_ostream FQNStream(QualifiedName);
+  Node.printQualifiedName(FQNStream);
+
+  return llvm::any_of(IgnoredCtorsOrOps,
+                      [QualifiedName](const std::string &NameInOptions) {
+                        return NameInOptions == QualifiedName;
+                      });
+}
+
+} // namespace
+
+void ExplicitConstructorCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
+  Options.store(Opts, "IgnoredConstructors",
+                utils::options::serializeStringList(IgnoredConstructors));
+  Options.store(
+      Opts, "IgnoredConversionOperators",
+      utils::options::serializeStringList(IgnoredConversionOperators));
+}
 
 void ExplicitConstructorCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       cxxConstructorDecl(unless(anyOf(isImplicit(), // Compiler-generated.
-                                      isDeleted(), isInstantiated())))
+                                      isDeleted(), isInstantiated(),
+                                      isIgnored(IgnoredConstructors))))
           .bind("ctor"),
       this);
   Finder->addMatcher(
       cxxConversionDecl(unless(anyOf(isExplicit(), // Already marked explicit.
                                      isImplicit(), // Compiler-generated.
-                                     isDeleted(), isInstantiated())))
+                                     isDeleted(), isInstantiated(),
+                                     isIgnored(IgnoredConversionOperators))))
 
           .bind("conversion"),
       this);

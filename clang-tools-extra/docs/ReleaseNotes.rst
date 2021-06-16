@@ -150,6 +150,11 @@ New check aliases
   :doc:`concurrency-thread-canceltype-asynchronous
   <clang-tidy/checks/concurrency-thread-canceltype-asynchronous>` was added.
 
+- New alias :doc:`cppcoreguidelines-explicit-constructor-and-conversion
+  <clang-tidy/checks/cppcoreguidelines-explicit-constructor-and-conversion>` to
+  :doc:`google-explicit-constructor
+  <clang-tidy/checks/google-explicit-constructor>` was added.
+
 Changes in existing checks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -170,6 +175,11 @@ Changes in existing checks
 
   Added ``FixItHints`` to the checks which make the problematic variables, pointers 
   and references constant.
+- Improved :doc:`google-explicit-constructor
+  <clang-tidy/checks/google-explicit-constructor>` check.
+
+  Added options to disable warnings for constructors and conversion operators
+  contained in a ignore-list.
 
 Removed checks
 ^^^^^^^^^^^^^^
