@@ -134,6 +134,7 @@ New checks
 
   Finds constructors which just initialize class members, so they can be
   replaced with in-class member initializers.
+
 - New :doc:`misc-avoid-std-io-outside-main
   <clang-tidy/checks/misc-avoid-std-io-outside-main>` check.
 
@@ -141,6 +142,12 @@ New checks
   ``wcout``, ``cerr`` or ``wcerr``, that are used outside the ``main``
   function. It also finds uses of ``cstdio`` and ``stdio.h`` functions like
   ``printf()`` outside the ``main`` function.
+
+- New :doc:`cppcoreguidelines-virtual-class-destructor
+  <clang-tidy/checks/cppcoreguidelines-virtual-class-destructor>` check.
+
+  Finds virtual classes whose destructor is neither public and virtual nor
+  protected and non-virtual.
 
 New check aliases
 ^^^^^^^^^^^^^^^^^
