@@ -148,6 +148,7 @@ Clang-Tidy Checks
    `cppcoreguidelines-avoid-goto <cppcoreguidelines-avoid-goto.html>`_,
    `cppcoreguidelines-avoid-init-default-constructors <cppcoreguidelines-avoid-init-default-constructors.html>`_,
    `cppcoreguidelines-avoid-non-const-global-variables <cppcoreguidelines-avoid-non-const-global-variables.html>`_,
+   `cppcoreguidelines-declare-loop-variable-in-the-initializer <cppcoreguidelines-declare-loop-variable-in-the-initializer.html>`_,
    `cppcoreguidelines-init-variables <cppcoreguidelines-init-variables.html>`_, "Yes"
    `cppcoreguidelines-interfaces-global-init <cppcoreguidelines-interfaces-global-init.html>`_,
    `cppcoreguidelines-macro-usage <cppcoreguidelines-macro-usage.html>`_,

@@ -9,6 +9,7 @@ add_clang_library(clangTidyCppCoreGuidelinesModule
   AvoidInitDefaultConstructorsCheck.cpp
   AvoidNonConstGlobalVariablesCheck.cpp
   CppCoreGuidelinesTidyModule.cpp
+  DeclareLoopVariableInTheInitializerCheck.cpp
   InitVariablesCheck.cpp
   InterfacesGlobalInitCheck.cpp
   MacroUsageCheck.cpp

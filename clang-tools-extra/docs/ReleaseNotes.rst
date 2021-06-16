@@ -112,6 +112,11 @@ New checks
   <clang-tidy/checks/cppcoreguidelines-avoid-do-while>` check.
 
   Checks if a ``do-while`` loop exists and flags it.
+- New :doc:`cppcoreguidelines-declare-loop-variable-in-the-initializer
+  <clang-tidy/checks/cppcoreguidelines-declare-loop-variable-in-the-initializer>` check.
+
+  Finds variables that are modified inside a ``for`` statement, are not used elsewhere
+  and are declared outside the ``for`` statement.
 
 - New :doc:`cppcoreguidelines-prefer-member-initializer
   <clang-tidy/checks/cppcoreguidelines-prefer-member-initializer>` check.
